@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Biểu đồ Nhiệt độ & Độ ẩm</h2>
+    <canvas id="sensorChart" width="600" height="400"></canvas>
+
+    <script>
+        async function fetchData() {
+            const res = await fetch('/data');
+            return await res.json();
+        }
+
+        async function renderChart() {
+            const data = await fetchData();
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [
+                        {
+                            label: 'Nhiệt độ (°C)',
+                            data: data.temperatures,
+                            borderColor: 'red',
+                            fill: false
+                        },
+                        {
+                            label: 'Độ ẩm (%)',
+                            data: data.humidities,
+                            borderColor: 'blue',
+                            fill: false
+                        }
+                    ]
+                }
+            });
+        }
+
+        renderChart();
+        setInterval(renderChart, 10000); // Cập nhật mỗi 10 giây
+    </script>
+</body>
+</html>
