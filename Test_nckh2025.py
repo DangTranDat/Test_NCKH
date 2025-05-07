@@ -26,11 +26,16 @@ def index():
 
 @app.route('/data')
 def data():
-    rows = get_data()
-    timestamps = [row[0].strftime("%H:%M:%S") for row in rows]
-    temperatures = [row[1] for row in rows]
-    humidities = [row[2] for row in rows]
-    return jsonify({'timestamps': timestamps, 'temperatures': temperatures, 'humidities': humidities})
+    try:
+        rows = get_data()
+        timestamps = [row[0].strftime("%H:%M:%S") for row in rows]
+        temperatures = [row[1] for row in rows]
+        humidities = [row[2] for row in rows]
+        return jsonify({'timestamps': timestamps, 'temperatures': temperatures, 'humidities': humidities})
+    except Exception as e:
+        print("Lỗi trong quá trình lấy dữ liệu:", e)
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000)
