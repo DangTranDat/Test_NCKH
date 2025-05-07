@@ -4,21 +4,31 @@ import os
 
 app = Flask(__name__)
 
-# Kết nối đến cơ sở dữ liệu PostgreSQL
 def get_data():
-    conn = psycopg2.connect(
-        host=os.environ.get('DB_HOST'),
-        user=os.environ.get('DB_USER'),
-        password=os.environ.get('DB_PASSWORD'),
-        dbname=os.environ.get('DB_NAME'),
-        port=os.environ.get('DB_PORT', 5432)
-    )
-    cursor = conn.cursor()
-    cursor.execute("SELECT timestamp, temperature, humidity FROM sensor_data ORDER BY timestamp DESC LIMIT 20")
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows[::-1]  # đảo ngược để có thứ tự thời gian tăng dần
+    try:
+        # Kết nối đến cơ sở dữ liệu PostgreSQL
+        conn = psycopg2.connect(
+            host=os.environ.get('DB_HOST'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD'),
+            dbname=os.environ.get('DB_NAME'),
+            port=os.environ.get('DB_PORT', 5432)
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT timestamp, temperature, humidity FROM sensor_data ORDER BY timestamp DESC LIMIT 20")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Debug log để kiểm tra dữ liệu trả về
+        print("Dữ liệu từ CSDL:", rows)
+        return rows[::-1]  # Đảo ngược để có thứ tự thời gian tăng dần
+
+    except Exception as e:
+        # In ra lỗi nếu có lỗi kết nối hoặc query
+        print(f"Lỗi trong get_data: {e}")
+        return []  # Trả về danh sách rỗng nếu có lỗi
+
 
 @app.route('/')
 def index():
