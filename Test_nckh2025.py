@@ -1,15 +1,17 @@
 from flask import Flask, render_template, jsonify
-import mysql.connector
+import psycopg2
+import os
 
 app = Flask(__name__)
 
-# Kết nối CSDL
+# Kết nối đến cơ sở dữ liệu PostgreSQL
 def get_data():
-    conn = mysql.connector.connect(
-        host='your-db-host',
-        user='your-db-user',
-        password='your-db-password',
-        database='your-db-name'
+    conn = psycopg2.connect(
+        host=os.environ.get('DB_HOST'),
+        user=os.environ.get('DB_USER'),
+        password=os.environ.get('DB_PASSWORD'),
+        dbname=os.environ.get('DB_NAME'),
+        port=os.environ.get('DB_PORT', 5432)
     )
     cursor = conn.cursor()
     cursor.execute("SELECT timestamp, temperature, humidity FROM sensor_data ORDER BY timestamp DESC LIMIT 20")
@@ -20,7 +22,7 @@ def get_data():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('test_nckh2025.html')
 
 @app.route('/data')
 def data():
@@ -31,4 +33,4 @@ def data():
     return jsonify({'timestamps': timestamps, 'temperatures': temperatures, 'humidities': humidities})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
