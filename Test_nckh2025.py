@@ -15,7 +15,7 @@ def get_data():
             port=os.environ.get('DB_PORT', 5432)
         )
         cursor = conn.cursor()
-        cursor.execute("SELECT timestamp, temperature, humidity FROM sensor_data ORDER BY timestamp DESC LIMIT 20")
+        cursor.execute("SELECT timestamp, temperature, humidity FROM nckh2025 ORDER BY timestamp DESC LIMIT 20")
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
