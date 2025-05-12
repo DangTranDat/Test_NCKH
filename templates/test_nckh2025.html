@@ -1,21 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Sensor Data</title>
+    <meta charset="UTF-8">
+    <title>Giám sát dữ liệu cảm biến</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+    </style>
 </head>
 <body>
-    <h2>Temperature & Humidity Chart</h2>
-    <canvas id="sensorChart"></canvas>
+    <h2>Biểu đồ dữ liệu cảm biến môi trường</h2>
+
+    <div class="chart-container">
+        <canvas id="tempHumChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="waterLevelChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="soilRainChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="pressureVibrationChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="accelerationChart"></canvas>
+    </div>
+
     <script>
         fetch('/data')
             .then(response => response.json())
             .then(data => {
-                const ctx = document.getElementById('sensorChart').getContext('2d');
-                const chart = new Chart(ctx, {
+                const labels = data.timestamps;
+
+                // Temperature & Humidity
+                new Chart(document.getElementById('tempHumChart'), {
                     type: 'line',
                     data: {
-                        labels: data.timestamps,
+                        labels: labels,
                         datasets: [
                             {
                                 label: 'Temperature (°C)',
@@ -27,6 +60,94 @@
                                 label: 'Humidity (%)',
                                 data: data.humidities,
                                 borderColor: 'blue',
+                                fill: false
+                            }
+                        ]
+                    }
+                });
+
+                // Water Level
+                new Chart(document.getElementById('waterLevelChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Water Level (cm)',
+                                data: data.water_levels,
+                                borderColor: 'teal',
+                                fill: false
+                            }
+                        ]
+                    }
+                });
+
+                // Soil Moisture & Rain
+                new Chart(document.getElementById('soilRainChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Soil Moisture',
+                                data: data.soil_moistures,
+                                borderColor: 'brown',
+                                fill: false
+                            },
+                            {
+                                label: 'Rain (0 = Không mưa, 1 = Có mưa)',
+                                data: data.rains,
+                                borderColor: 'gray',
+                                fill: false
+                            }
+                        ]
+                    }
+                });
+
+                // Pressure & Vibration
+                new Chart(document.getElementById('pressureVibrationChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Pressure (hPa)',
+                                data: data.pressures,
+                                borderColor: 'orange',
+                                fill: false
+                            },
+                            {
+                                label: 'Vibration (1 = rung)',
+                                data: data.vibrations,
+                                borderColor: 'purple',
+                                fill: false
+                            }
+                        ]
+                    }
+                });
+
+                // Acceleration
+                new Chart(document.getElementById('accelerationChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Accel X',
+                                data: data.accel_xs,
+                                borderColor: 'green',
+                                fill: false
+                            },
+                            {
+                                label: 'Accel Y',
+                                data: data.accel_ys,
+                                borderColor: 'blue',
+                                fill: false
+                            },
+                            {
+                                label: 'Accel Z',
+                                data: data.accel_zs,
+                                borderColor: 'red',
                                 fill: false
                             }
                         ]
