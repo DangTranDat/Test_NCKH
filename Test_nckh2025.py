@@ -46,13 +46,13 @@ def upload_data():
         temperature = data.get('temperature')
         humidity = data.get('humidity')
         water_level = data.get('water_level')
-        rain = data.get('rain')
+        rain = data.get('rain_level')
         soil_moisture = data.get('soil_moisture')
         pressure = data.get('pressure')
         vibration = data.get('vibration')
-        accel_x = data.get('accel_x')
-        accel_y = data.get('accel_y')
-        accel_z = data.get('accel_z')
+        gyro_x = data.get('gyro_x')
+        gyro_y = data.get('gyro_y')
+        gyro_z = data.get('gyro_z')
         timestamp = datetime.now()
 
         # Ghi vào cơ sở dữ liệu
@@ -61,14 +61,14 @@ def upload_data():
         cursor.execute("""
             INSERT INTO nckh2025 (
                 timestamp, temperature, humidity,
-                water_level, rain, soil_moisture,
-                pressure, vibration, accel_x, accel_y, accel_z
+                water_level, rain_level, soil_moisture,
+                pressure, vibration, gyro_x, gyro_y, gyro_z
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             timestamp, temperature, humidity,
-            water_level, rain, soil_moisture,
-            pressure, vibration, accel_x, accel_y, accel_z
+            water_level, rain_level, soil_moisture,
+            pressure, vibration, gyro_x, gyro_y, gyro_z
         ))
         conn.commit()
         cursor.close()
