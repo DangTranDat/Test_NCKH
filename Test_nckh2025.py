@@ -3,7 +3,7 @@ import psycopg2
 import os
 from datetime import datetime
 
-app = Flask(__name__)   
+app = Flask(__name__)
 
 def get_connection():
     return psycopg2.connect(
@@ -16,25 +16,39 @@ def get_connection():
 
 @app.route('/')
 def index():
-    return render_template('test_nckh2025.html')
-
-@app.route('/data')
-def data():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT timestamp, temperature, humidity FROM nckh2025 ORDER BY timestamp DESC LIMIT 20")
+        cursor.execute("""
+            SELECT timestamp, temperature, humidity, water_level, rain,
+                   soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z
+            FROM nckh2025
+            ORDER BY timestamp DESC
+            LIMIT 20
+        """)
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
 
-        timestamps = [row[0].strftime("%H:%M:%S") for row in rows]
-        temperatures = [row[1] for row in rows]
-        humidities = [row[2] for row in rows]
-        return jsonify({'timestamps': timestamps, 'temperatures': temperatures, 'humidities': humidities})
+        data = [{
+            'timestamp': row[0].strftime("%Y-%m-%d %H:%M:%S"),
+            'temperature': row[1],
+            'humidity': row[2],
+            'water_level': row[3],
+            'rain': row[4],
+            'soil_moisture': row[5],
+            'pressure': row[6],
+            'vibration': row[7],
+            'gyro_x': row[8],
+            'gyro_y': row[9],
+            'gyro_z': row[10]
+        } for row in rows[::-1]]  # đảo ngược để thời gian tăng dần
+
+        return render_template('dashboard.html', data=data)
+
     except Exception as e:
-        print("Lỗi trong quá trình lấy dữ liệu:", e)
-        return jsonify({'error': str(e)}), 500
+        print("Lỗi khi truy vấn dữ liệu:", e)
+        return "Lỗi khi tải dữ liệu từ cơ sở dữ liệu."
 
 @app.route('/upload', methods=['POST'])
 def upload_data():
@@ -42,11 +56,10 @@ def upload_data():
         data = request.json
         print("Dữ liệu nhận từ Gateway:", data)
 
-        # Lấy dữ liệu từ JSON
         temperature = data.get('temperature')
         humidity = data.get('humidity')
         water_level = data.get('water_level')
-        rain = data.get('rain_level')
+        rain = data.get('rain')
         soil_moisture = data.get('soil_moisture')
         pressure = data.get('pressure')
         vibration = data.get('vibration')
@@ -55,19 +68,17 @@ def upload_data():
         gyro_z = data.get('gyro_z')
         timestamp = datetime.now()
 
-        # Ghi vào cơ sở dữ liệu
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO nckh2025 (
                 timestamp, temperature, humidity,
-                water_level, rain_level, soil_moisture,
-                pressure, vibration, gyro_x, gyro_y, gyro_z
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                water_level, rain, soil_moisture,
+                pressure, vibration, accel_x, accel_y, accel_z
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             timestamp, temperature, humidity,
-            water_level, rain_level, soil_moisture,
+            water_level, rain, soil_moisture,
             pressure, vibration, gyro_x, gyro_y, gyro_z
         ))
         conn.commit()
