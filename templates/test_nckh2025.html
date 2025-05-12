@@ -23,17 +23,6 @@
             box-shadow: 0 0 10px #ccc;
             border-radius: 8px;
         }
-        #alertBox {
-            max-width: 900px;
-            margin: auto;
-            padding: 20px;
-            background-color: #ffdddd;
-            border-left: 6px solid #f44336;
-            color: #a94442;
-            font-weight: bold;
-            display: none;
-            border-radius: 6px;
-        }
     </style>
 </head>
 <body>
@@ -55,53 +44,11 @@
         <canvas id="rainVibrationChart"></canvas>
     </div>
 
-    <div id="alertBox">
-        ⚠️ <span id="alertMessage"></span>
-    </div>
-
     <script>
         fetch('/data')
             .then(response => response.json())
             .then(data => {
                 const labels = data.timestamps;
-
-                // ======== CẢNH BÁO ========
-                const alerts = [];
-
-                // 1. Mực nước > 100cm
-                const highWater = data.water_levels.some(lvl => lvl > 100);
-                if (highWater) alerts.push("Mực nước cao bất thường (>100cm) - NGUY CƠ LŨ!");
-
-                // 2. Rung chuyển
-                const hasVibration = data.vibrations.some(v => v === 1);
-                if (hasVibration) alerts.push("Phát hiện rung chuyển - NGUY CƠ SẠT LỞ!");
-
-                // 3. Mưa kéo dài >= 3 lần liên tiếp
-                let rainStreak = 0;
-                for (let r of data.rains) {
-                    if (r === 1) {
-                        rainStreak++;
-                        if (rainStreak >= 3) {
-                            alerts.push("Mưa kéo dài - CẢNH BÁO LŨ QUÉT!");
-                            break;
-                        }
-                    } else {
-                        rainStreak = 0;
-                    }
-                }
-
-                // 4. Dao động mạnh (Gyro)
-                const threshold = 200;
-                const gyroExtreme = data.gyro_xs.concat(data.gyro_ys, data.gyro_zs).some(val => Math.abs(val) > threshold);
-                if (gyroExtreme) alerts.push("Dao động mạnh được ghi nhận - NGUY CƠ ĐẤT YẾU!");
-
-                // Hiển thị cảnh báo nếu có
-                if (alerts.length > 0) {
-                    document.getElementById("alertBox").style.display = "block";
-                    document.getElementById("alertMessage").innerHTML = alerts.join("<br>");
-                }
-
-                // ======== VẼ BIỂU ĐỒ ========
 
                 // Nhiệt độ và độ ẩm
                 new Chart(document.getElementById('tempHumChart'), {
@@ -190,7 +137,7 @@
                     }
                 });
 
-                // Gia tốc (Gyro)
+                // Gia tốc (Gyroscope)
                 new Chart(document.getElementById('accelerationChart'), {
                     type: 'line',
                     data: {
@@ -263,10 +210,6 @@
                         }
                     }
                 });
-            })
-            .catch(error => {
-                console.error("Lỗi khi tải dữ liệu từ /data:", error);
-                alert("Không thể tải dữ liệu từ máy chủ. Vui lòng kiểm tra lại.");
             });
     </script>
 </body>
