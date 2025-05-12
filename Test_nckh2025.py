@@ -64,13 +64,13 @@ def upload_data():
         temperature = data.get('temperature')
         humidity = data.get('humidity')
         water_level = data.get('water_level')
-        rain_level= data.get('rain')
+        rain_level= data.get('rain_level')
         soil_moisture = data.get('soil_moisture')
         pressure = data.get('pressure')
         vibration = data.get('vibration')
-        gyro_x = data.get('accel_x')
-        gyro_y = data.get('accel_y')
-        gyro_z = data.get('accel_z')
+        gyro_x = data.get('gyro_x')
+        gyro_y = data.get('gyro_y')
+        gyro_z = data.get('gyro_z')
         timestamp = datetime.now()
 
         # Ghi vào cơ sở dữ liệu
