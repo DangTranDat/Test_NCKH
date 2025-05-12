@@ -2,111 +2,74 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống cảnh báo sớm lũ lụt và sạt lở đất</title>
+    <title>Hệ thống cảnh báo lũ lụt & sạt lở đất</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            background-color: #f4f4f4;
+            padding: 10px;
+            background-color: #f4f6f8;
         }
 
-        header {
+        h1 {
             text-align: center;
-            background-color: #2196f3;
-            color: white;
-            padding: 15px;
-            font-size: 1.5em;
+            color: #2c3e50;
         }
 
         .chart-container {
-            width: 100%;
-            max-width: 800px;
+            width: 95%;
+            max-width: 900px;
             margin: 20px auto;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .table-container {
-            max-width: 800px;
+        .alerts {
+            max-width: 900px;
             margin: 20px auto;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: #ffe0e0;
+            padding: 16px;
+            border-radius: 10px;
+            color: #c0392b;
+            font-weight: bold;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
+        .alert-item {
+            margin-bottom: 10px;
         }
 
-        th, td {
-            padding: 8px;
-            border: 1px solid #ccc;
-        }
-
-        th {
-            background-color: #f0f0f0;
-        }
-
-        @media (max-width: 600px) {
-            canvas {
-                max-width: 100%;
-            }
-
-            body {
-                padding: 5px;
-            }
-
-            header {
-                font-size: 1.2em;
-                padding: 10px;
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <h1>Hệ thống giám sát cảnh báo lũ lụt và sạt lở đất</h1>
 
-    <header>
-        Giám sát cảnh báo sớm lũ lụt và sạt lở đất
-    </header>
-
-    <div class="chart-container">
-        <h3>Biểu đồ mực nước và độ ẩm đất</h3>
-        <canvas id="waterSoilChart"></canvas>
+    <div class="alerts" id="alertBox">
+        <!-- Thông báo mưa, rung sẽ hiển thị tại đây -->
     </div>
 
     <div class="chart-container">
-        <h3>Biểu đồ lượng mưa</h3>
-        <canvas id="rainChart"></canvas>
+        <canvas id="tempHumChart"></canvas>
     </div>
 
     <div class="chart-container">
-        <h3>Biểu đồ gia tốc (MPU6050)</h3>
-        <canvas id="accelerationChart"></canvas>
+        <canvas id="waterLevelChart"></canvas>
     </div>
 
-    <div class="table-container">
-        <h3>Thông số bổ sung (hiển thị gần đây nhất)</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Thời gian</th>
-                    <th>Nhiệt độ (°C)</th>
-                    <th>Độ ẩm (%)</th>
-                    <th>Áp suất (hPa)</th>
-                    <th>Rung động</th>
-                </tr>
-            </thead>
-            <tbody id="sensorTableBody">
-                <tr><td colspan="5">Đang tải dữ liệu...</td></tr>
-            </tbody>
-        </table>
+    <div class="chart-container">
+        <canvas id="pressureAltitudeChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="gyroChart"></canvas>
     </div>
 
     <script>
@@ -115,8 +78,59 @@
             .then(data => {
                 const labels = data.timestamps;
 
-                // Water level & Soil moisture chart
-                new Chart(document.getElementById('waterSoilChart'), {
+                // Thông báo cảnh báo
+                const alertBox = document.getElementById("alertBox");
+                const lastRain = data.rains[data.rains.length - 1];
+                const lastVibration = data.vibrations[data.vibrations.length - 1];
+
+                let alerts = "";
+
+                if (lastRain === 1) {
+                    alerts += `<div class="alert-item">🌧️ CẢNH BÁO: Phát hiện có mưa!</div>`;
+                }
+                if (lastVibration === 1) {
+                    alerts += `<div class="alert-item">⚠️ CẢNH BÁO: Phát hiện rung chấn bất thường!</div>`;
+                }
+
+                if (alerts === "") {
+                    alerts = "<div>✅ Không có cảnh báo nào gần đây.</div>";
+                }
+
+                alertBox.innerHTML = alerts;
+
+                // Temperature & Humidity Chart
+                new Chart(document.getElementById('tempHumChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Nhiệt độ (°C)',
+                                data: data.temperatures,
+                                borderColor: 'red',
+                                fill: false
+                            },
+                            {
+                                label: 'Độ ẩm (%)',
+                                data: data.humidities,
+                                borderColor: 'blue',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Nhiệt độ và Độ ẩm'
+                            }
+                        }
+                    }
+                });
+
+                // Water Level Chart
+                new Chart(document.getElementById('waterLevelChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
@@ -124,77 +138,89 @@
                             {
                                 label: 'Mực nước (cm)',
                                 data: data.water_levels,
-                                borderColor: 'blue',
-                                fill: false
-                            },
-                            {
-                                label: 'Độ ẩm đất',
-                                data: data.soil_moistures,
-                                borderColor: 'brown',
+                                borderColor: 'teal',
                                 fill: false
                             }
                         ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Mực nước đo được'
+                            }
+                        }
                     }
                 });
 
-                // Rain chart
-                new Chart(document.getElementById('rainChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Mưa (0 = không, 1 = có)',
-                            data: data.rains,
-                            borderColor: 'gray',
-                            fill: false,
-                            stepped: true
-                        }]
-                    }
-                });
-
-                // Acceleration chart
-                new Chart(document.getElementById('accelerationChart'), {
+                // Pressure & Altitude Chart
+                new Chart(document.getElementById('pressureAltitudeChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
                             {
-                                label: 'Gia tốc X',
-                                data: data.accel_xs,
-                                borderColor: 'red',
+                                label: 'Áp suất (hPa)',
+                                data: data.pressures,
+                                borderColor: 'orange',
                                 fill: false
                             },
                             {
-                                label: 'Gia tốc Y',
-                                data: data.accel_ys,
+                                label: 'Độ cao (m)',
+                                data: data.altitudes,
                                 borderColor: 'green',
-                                fill: false
-                            },
-                            {
-                                label: 'Gia tốc Z',
-                                data: data.accel_zs,
-                                borderColor: 'blue',
                                 fill: false
                             }
                         ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Áp suất không khí và Độ cao'
+                            }
+                        }
                     }
                 });
 
-                // Bảng thông số cuối cùng
-                const table = document.getElementById('sensorTableBody');
-                table.innerHTML = `
-                    <tr>
-                        <td>${data.timestamps.at(-1)}</td>
-                        <td>${data.temperatures.at(-1)}</td>
-                        <td>${data.humidities.at(-1)}</td>
-                        <td>${data.pressures.at(-1)}</td>
-                        <td>${data.vibrations.at(-1) === 1 ? 'Có rung' : 'Không'}</td>
-                    </tr>
-                `;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu:', error);
-                document.getElementById('sensorTableBody').innerHTML = '<tr><td colspan="5">Lỗi khi tải dữ liệu</td></tr>';
+                // Gyroscope (MPU6050)
+                new Chart(document.getElementById('gyroChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Gyro X (°/s)',
+                                data: data.gyro_xs,
+                                borderColor: 'purple',
+                                fill: false
+                            },
+                            {
+                                label: 'Gyro Y (°/s)',
+                                data: data.gyro_ys,
+                                borderColor: 'brown',
+                                fill: false
+                            },
+                            {
+                                label: 'Gyro Z (°/s)',
+                                data: data.gyro_zs,
+                                borderColor: 'gray',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Cảm biến con quay (Gyroscope)'
+                            }
+                        }
+                    }
+                });
             });
     </script>
 </body>
