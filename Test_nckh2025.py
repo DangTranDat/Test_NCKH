@@ -36,6 +36,49 @@ def data():
         print("Lỗi trong quá trình lấy dữ liệu:", e)
         return jsonify({'error': str(e)}), 500
 
+@app.route('/upload', methods=['POST'])
+def upload_data():
+    try:
+        data = request.json
+        print("Dữ liệu nhận từ Gateway:", data)
+
+        # Lấy dữ liệu từ JSON
+        temperature = data.get('temperature')
+        humidity = data.get('humidity')
+        water_level = data.get('water_level')
+        rain = data.get('rain')
+        soil_moisture = data.get('soil_moisture')
+        pressure = data.get('pressure')
+        vibration = data.get('vibration')
+        accel_x = data.get('accel_x')
+        accel_y = data.get('accel_y')
+        accel_z = data.get('accel_z')
+        timestamp = datetime.now()
+
+        # Ghi vào cơ sở dữ liệu
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO nckh2025 (
+                timestamp, temperature, humidity,
+                water_level, rain, soil_moisture,
+                pressure, vibration, accel_x, accel_y, accel_z
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            timestamp, temperature, humidity,
+            water_level, rain, soil_moisture,
+            pressure, vibration, accel_x, accel_y, accel_z
+        ))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'status': 'success'}), 200
+
+    except Exception as e:
+        print("Lỗi khi ghi dữ liệu:", e)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000)
