@@ -2,40 +2,111 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Giám sát dữ liệu cảm biến</title>
+    <title>Hệ thống cảnh báo sớm lũ lụt và sạt lở đất</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            padding: 10px;
+            margin: 0;
+            background-color: #f4f4f4;
         }
-        h2 {
+
+        header {
             text-align: center;
+            background-color: #2196f3;
+            color: white;
+            padding: 15px;
+            font-size: 1.5em;
         }
+
         .chart-container {
             width: 100%;
-            max-width: 900px;
-            margin: 40px auto;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .table-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        @media (max-width: 600px) {
+            canvas {
+                max-width: 100%;
+            }
+
+            body {
+                padding: 5px;
+            }
+
+            header {
+                font-size: 1.2em;
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <h2>Biểu đồ dữ liệu cảm biến môi trường</h2>
+
+    <header>
+        Giám sát cảnh báo sớm lũ lụt và sạt lở đất
+    </header>
 
     <div class="chart-container">
-        <canvas id="tempHumChart"></canvas>
+        <h3>Biểu đồ mực nước và độ ẩm đất</h3>
+        <canvas id="waterSoilChart"></canvas>
     </div>
+
     <div class="chart-container">
-        <canvas id="waterLevelChart"></canvas>
+        <h3>Biểu đồ lượng mưa</h3>
+        <canvas id="rainChart"></canvas>
     </div>
+
     <div class="chart-container">
-        <canvas id="soilRainChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="pressureVibrationChart"></canvas>
-    </div>
-    <div class="chart-container">
+        <h3>Biểu đồ gia tốc (MPU6050)</h3>
         <canvas id="accelerationChart"></canvas>
+    </div>
+
+    <div class="table-container">
+        <h3>Thông số bổ sung (hiển thị gần đây nhất)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Nhiệt độ (°C)</th>
+                    <th>Độ ẩm (%)</th>
+                    <th>Áp suất (hPa)</th>
+                    <th>Rung động</th>
+                </tr>
+            </thead>
+            <tbody id="sensorTableBody">
+                <tr><td colspan="5">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -44,115 +115,86 @@
             .then(data => {
                 const labels = data.timestamps;
 
-                // Temperature & Humidity
-                new Chart(document.getElementById('tempHumChart'), {
+                // Water level & Soil moisture chart
+                new Chart(document.getElementById('waterSoilChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
                             {
-                                label: 'Temperature (°C)',
-                                data: data.temperatures,
-                                borderColor: 'red',
+                                label: 'Mực nước (cm)',
+                                data: data.water_levels,
+                                borderColor: 'blue',
                                 fill: false
                             },
                             {
-                                label: 'Humidity (%)',
-                                data: data.humidities,
-                                borderColor: 'blue',
-                                fill: false
-                            }
-                        ]
-                    }
-                });
-
-                // Water Level
-                new Chart(document.getElementById('waterLevelChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Water Level (cm)',
-                                data: data.water_levels,
-                                borderColor: 'teal',
-                                fill: false
-                            }
-                        ]
-                    }
-                });
-
-                // Soil Moisture & Rain
-                new Chart(document.getElementById('soilRainChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Soil Moisture',
+                                label: 'Độ ẩm đất',
                                 data: data.soil_moistures,
                                 borderColor: 'brown',
                                 fill: false
-                            },
-                            {
-                                label: 'Rain (0 = Không mưa, 1 = Có mưa)',
-                                data: data.rains,
-                                borderColor: 'gray',
-                                fill: false
                             }
                         ]
                     }
                 });
 
-                // Pressure & Vibration
-                new Chart(document.getElementById('pressureVibrationChart'), {
+                // Rain chart
+                new Chart(document.getElementById('rainChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
-                        datasets: [
-                            {
-                                label: 'Pressure (hPa)',
-                                data: data.pressures,
-                                borderColor: 'orange',
-                                fill: false
-                            },
-                            {
-                                label: 'Vibration (1 = rung)',
-                                data: data.vibrations,
-                                borderColor: 'purple',
-                                fill: false
-                            }
-                        ]
+                        datasets: [{
+                            label: 'Mưa (0 = không, 1 = có)',
+                            data: data.rains,
+                            borderColor: 'gray',
+                            fill: false,
+                            stepped: true
+                        }]
                     }
                 });
 
-                // Acceleration
+                // Acceleration chart
                 new Chart(document.getElementById('accelerationChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
                             {
-                                label: 'gyro X',
-                                data: data.gyro_xs,
+                                label: 'Gia tốc X',
+                                data: data.accel_xs,
+                                borderColor: 'red',
+                                fill: false
+                            },
+                            {
+                                label: 'Gia tốc Y',
+                                data: data.accel_ys,
                                 borderColor: 'green',
                                 fill: false
                             },
                             {
-                                label: 'gyro Y',
-                                data: data.gyro_ys,
+                                label: 'Gia tốc Z',
+                                data: data.accel_zs,
                                 borderColor: 'blue',
-                                fill: false
-                            },
-                            {
-                                label: 'gyro Z',
-                                data: data.gyro_zs,
-                                borderColor: 'red',
                                 fill: false
                             }
                         ]
                     }
                 });
+
+                // Bảng thông số cuối cùng
+                const table = document.getElementById('sensorTableBody');
+                table.innerHTML = `
+                    <tr>
+                        <td>${data.timestamps.at(-1)}</td>
+                        <td>${data.temperatures.at(-1)}</td>
+                        <td>${data.humidities.at(-1)}</td>
+                        <td>${data.pressures.at(-1)}</td>
+                        <td>${data.vibrations.at(-1) === 1 ? 'Có rung' : 'Không'}</td>
+                    </tr>
+                `;
+            })
+            .catch(error => {
+                console.error('Lỗi khi lấy dữ liệu:', error);
+                document.getElementById('sensorTableBody').innerHTML = '<tr><td colspan="5">Lỗi khi tải dữ liệu</td></tr>';
             });
     </script>
 </body>
