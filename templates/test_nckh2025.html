@@ -2,58 +2,73 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống cảnh báo lũ lụt & sạt lở đất</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cảnh Báo Sớm Lũ Lụt & Sạt Lở</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: Arial, sans-serif;
+            padding: 20px;
             margin: 0;
-            padding: 10px;
-            background-color: #f4f6f8;
+            background-color: #f5f8ff;
         }
 
-        h1 {
+        h2 {
             text-align: center;
-            color: #2c3e50;
+            color: #0a3d62;
         }
 
         .chart-container {
-            width: 95%;
+            width: 100%;
             max-width: 900px;
             margin: 20px auto;
+        }
+
+        .status-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-box {
             background-color: #fff;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .alerts {
-            max-width: 900px;
-            margin: 20px auto;
-            background-color: #ffe0e0;
-            padding: 16px;
-            border-radius: 10px;
-            color: #c0392b;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 15px 20px;
+            min-width: 150px;
+            text-align: center;
             font-weight: bold;
+            color: #333;
         }
 
-        .alert-item {
-            margin-bottom: 10px;
+        .status-ok {
+            border-color: green;
+            color: green;
         }
 
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 20px;
+        .status-alert {
+            border-color: red;
+            color: red;
+        }
+
+        @media (max-width: 600px) {
+            .status-box {
+                min-width: 100px;
+                font-size: 14px;
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <h1>Hệ thống giám sát cảnh báo lũ lụt và sạt lở đất</h1>
+    <h2>Hệ Thống Cảnh Báo Sớm Lũ Lụt & Sạt Lở Đất</h2>
 
-    <div class="alerts" id="alertBox">
-        <!-- Thông báo mưa, rung sẽ hiển thị tại đây -->
+    <!-- Thông báo trạng thái boolean -->
+    <div class="status-container">
+        <div id="rainStatus" class="status-box">Đang kiểm tra mưa...</div>
+        <div id="landslideStatus" class="status-box">Đang kiểm tra sạt lở...</div>
     </div>
 
     <div class="chart-container">
@@ -69,7 +84,7 @@
     </div>
 
     <div class="chart-container">
-        <canvas id="gyroChart"></canvas>
+        <canvas id="accelerationChart"></canvas>
     </div>
 
     <script>
@@ -78,27 +93,16 @@
             .then(data => {
                 const labels = data.timestamps;
 
-                // Thông báo cảnh báo
-                const alertBox = document.getElementById("alertBox");
-                const lastRain = data.rains[data.rains.length - 1];
-                const lastVibration = data.vibrations[data.vibrations.length - 1];
+                // Cập nhật trạng thái mưa và sạt lở
+                const rainBox = document.getElementById('rainStatus');
+                rainBox.textContent = data.rain_detected[data.rain_detected.length - 1] === 1 ? "Có Mưa" : "Không Mưa";
+                rainBox.classList.add(data.rain_detected[data.rain_detected.length - 1] === 1 ? 'status-alert' : 'status-ok');
 
-                let alerts = "";
+                const landslideBox = document.getElementById('landslideStatus');
+                landslideBox.textContent = data.landslide_detected[data.landslide_detected.length - 1] === 1 ? "Cảnh Báo Sạt Lở!" : "An Toàn";
+                landslideBox.classList.add(data.landslide_detected[data.landslide_detected.length - 1] === 1 ? 'status-alert' : 'status-ok');
 
-                if (lastRain === 1) {
-                    alerts += `<div class="alert-item">🌧️ CẢNH BÁO: Phát hiện có mưa!</div>`;
-                }
-                if (lastVibration === 1) {
-                    alerts += `<div class="alert-item">⚠️ CẢNH BÁO: Phát hiện rung chấn bất thường!</div>`;
-                }
-
-                if (alerts === "") {
-                    alerts = "<div>✅ Không có cảnh báo nào gần đây.</div>";
-                }
-
-                alertBox.innerHTML = alerts;
-
-                // Temperature & Humidity Chart
+                // Biểu đồ nhiệt độ và độ ẩm
                 new Chart(document.getElementById('tempHumChart'), {
                     type: 'line',
                     data: {
@@ -117,44 +121,24 @@
                                 fill: false
                             }
                         ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Nhiệt độ và Độ ẩm'
-                            }
-                        }
                     }
                 });
 
-                // Water Level Chart
+                // Biểu đồ mực nước
                 new Chart(document.getElementById('waterLevelChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
-                        datasets: [
-                            {
-                                label: 'Mực nước (cm)',
-                                data: data.water_levels,
-                                borderColor: 'teal',
-                                fill: false
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Mực nước đo được'
-                            }
-                        }
+                        datasets: [{
+                            label: 'Mực nước (cm)',
+                            data: data.water_levels,
+                            borderColor: 'teal',
+                            fill: false
+                        }]
                     }
                 });
 
-                // Pressure & Altitude Chart
+                // Biểu đồ áp suất và độ cao
                 new Chart(document.getElementById('pressureAltitudeChart'), {
                     type: 'line',
                     data: {
@@ -169,56 +153,38 @@
                             {
                                 label: 'Độ cao (m)',
                                 data: data.altitudes,
-                                borderColor: 'green',
+                                borderColor: 'gray',
                                 fill: false
                             }
                         ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Áp suất không khí và Độ cao'
-                            }
-                        }
                     }
                 });
 
-                // Gyroscope (MPU6050)
-                new Chart(document.getElementById('gyroChart'), {
+                // Biểu đồ gia tốc
+                new Chart(document.getElementById('accelerationChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
                             {
-                                label: 'Gyro X (°/s)',
+                                label: 'Gyro X',
                                 data: data.gyro_xs,
+                                borderColor: 'green',
+                                fill: false
+                            },
+                            {
+                                label: 'Gyro Y',
+                                data: data.gyro_ys,
                                 borderColor: 'purple',
                                 fill: false
                             },
                             {
-                                label: 'Gyro Y (°/s)',
-                                data: data.gyro_ys,
-                                borderColor: 'brown',
-                                fill: false
-                            },
-                            {
-                                label: 'Gyro Z (°/s)',
+                                label: 'Gyro Z',
                                 data: data.gyro_zs,
-                                borderColor: 'gray',
+                                borderColor: 'red',
                                 fill: false
                             }
                         ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Cảm biến con quay (Gyroscope)'
-                            }
-                        }
                     }
                 });
             });
