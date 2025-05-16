@@ -134,7 +134,7 @@ def predict_trend():
         # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
         last = df.iloc[-1]
 
-        if last['temperature'] > 35:
+        if last['temperature'] < 35:
             alerts.append("Cảnh báo: Nhiệt độ cao vượt ngưỡng 35°C")
 
         if last['humidity'] < 30:
