@@ -2,186 +2,185 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống cảnh báo sớm lũ lụt và sạt lở đất</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giám sát lũ lụt và sạt lở</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f9ff;
+            margin: 0;
+            background-color: #f0f5f9;
+            color: #333;
         }
-        h2 {
+        #content {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
             text-align: center;
-            color: #003366;
+            color: #2c3e50;
         }
-        .chart-container {
+        .section {
+            margin-top: 40px;
+        }
+        .chart {
             width: 100%;
-            max-width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 0 10px #ccc;
-            border-radius: 8px;
+            height: 400px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+        th {
+            background-color: #f7f7f7;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            padding: 15px;
+            background-color: #2c3e50;
+            color: #fff;
         }
     </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h2>Hệ thống giám sát và cảnh báo sớm lũ lụt - sạt lở</h2>
+    <div id="content">
+        <h1>Giám sát lũ lụt và sạt lở</h1>
 
-    <!-- Dữ liệu thực tế -->
-    <div class="chart-container"><canvas id="tempHumChart"></canvas></div>
-    <div class="chart-container"><canvas id="waterLevelChart"></canvas></div>
-    <div class="chart-container"><canvas id="pressureAltitudeChart"></canvas></div>
-    <div class="chart-container"><canvas id="accelerationChart"></canvas></div>
-    <div class="chart-container"><canvas id="rainVibrationChart"></canvas></div>
+        <div class="section">
+            <h2>Biểu đồ các thông số</h2>
+            <div id="disasterChart" class="chart"></div>
+            <p><em>Các đường đứt nét biểu thị xu hướng dự đoán.</em></p>
+        </div>
 
-    <!-- Dự báo -->
-    <div class="chart-container"><canvas id="forecastChart"></canvas></div>
+        <div class="section">
+            <h2>Bảng dữ liệu hiện tại</h2>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Mực nước (cm)</th>
+                        <th>Lượng mưa (mm)</th>
+                        <th>Độ ẩm đất (%)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Thống kê tổng hợp</h2>
+            <div id="statistics"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Giám sát thiên tai - Nhóm phát triển IoT
+    </div>
 
     <script>
-        // DỮ LIỆU THỰC TẾ
-        fetch('/data')
+        fetch('/api/chart-data')
             .then(response => response.json())
             .then(data => {
-                const labels = data.timestamps;
+                const timestamps = data.timestamps;
+                const waterLevel = data.water_level;
+                const rainfall = data.rainfall;
+                const soilMoisture = data.soil_moisture;
 
-                new Chart(document.getElementById('tempHumChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Nhiệt độ (°C)', data: data.temperatures, borderColor: 'red', fill: false },
-                            { label: 'Độ ẩm (%)', data: data.humidities, borderColor: 'blue', fill: false }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { title: { display: true, text: 'Nhiệt độ và độ ẩm môi trường' } }
-                    }
-                });
+                const futureTimestamps = data.future_timestamps;
+                const predictedWaterLevel = data.predicted_water_level;
+                const predictedRainfall = data.predicted_rainfall;
+                const predictedSoilMoisture = data.predicted_soil_moisture;
 
-                new Chart(document.getElementById('waterLevelChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Mực nước (cm)', data: data.water_levels, borderColor: 'teal', fill: false }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { title: { display: true, text: 'Theo dõi mực nước để phát hiện nguy cơ lũ' } }
-                    }
-                });
+                // Populate table
+                const tableBody = document.querySelector('#dataTable tbody');
+                tableBody.innerHTML = '';
+                const displayCount = 20;
+                const start = Math.max(0, timestamps.length - displayCount);
+                for (let i = start; i < timestamps.length; i++) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${timestamps[i]}</td>
+                        <td>${waterLevel[i]}</td>
+                        <td>${rainfall[i]}</td>
+                        <td>${soilMoisture[i]}</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
 
-                new Chart(document.getElementById('pressureAltitudeChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Áp suất (hPa)', data: data.pressures, borderColor: 'orange', fill: false },
-                            { label: 'Độ cao (m)', data: data.altitudes, borderColor: 'green', fill: false }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { title: { display: true, text: 'Áp suất khí quyển và độ cao' } }
-                    }
-                });
+                // Plot chart
+                const traceWater = {
+                    x: timestamps, y: waterLevel,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Mực nước (cm)', line: { color: 'blue' }
+                };
 
-                new Chart(document.getElementById('accelerationChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Gyro X', data: data.gyro_xs, borderColor: 'purple', fill: false },
-                            { label: 'Gyro Y', data: data.gyro_ys, borderColor: 'blue', fill: false },
-                            { label: 'Gyro Z', data: data.gyro_zs, borderColor: 'red', fill: false }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { title: { display: true, text: 'Gia tốc theo 3 trục (phát hiện rung chuyển đất đá)' } }
-                    }
-                });
+                const traceRain = {
+                    x: timestamps, y: rainfall,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Lượng mưa (mm)', line: { color: 'green' }
+                };
 
-                new Chart(document.getElementById('rainVibrationChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Mưa (1 = Có mưa)', data: data.rains, backgroundColor: 'skyblue' },
-                            { label: 'Rung chuyển (1 = Có rung)', data: data.vibrations, backgroundColor: 'salmon' }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { title: { display: true, text: 'Trạng thái mưa và rung chuyển đất' } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                        }
-                    }
-                });
-            });
+                const traceSoil = {
+                    x: timestamps, y: soilMoisture,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Độ ẩm đất (%)', line: { color: 'orange' }
+                };
 
-        // DỰ BÁO
-        fetch('/predict')
-            .then(response => response.json())
-            .then(predictData => {
-                const ctx = document.getElementById('forecastChart').getContext('2d');
+                const traceWaterPred = {
+                    x: futureTimestamps, y: predictedWaterLevel,
+                    type: 'scatter', mode: 'lines',
+                    name: 'Dự đoán mực nước', line: { color: 'blue', dash: 'dash' }
+                };
 
-                const parameters = [
-                    { key: 'temperature', label: 'Nhiệt độ (°C)', color: 'red' },
-                    { key: 'humidity', label: 'Độ ẩm (%)', color: 'blue' },
-                    { key: 'water_level', label: 'Mực nước (cm)', color: 'teal' },
-                    { key: 'rain_level', label: 'Lượng mưa', color: 'navy' },
-                    { key: 'soil_moisture', label: 'Độ ẩm đất', color: 'brown' },
-                    { key: 'pressure', label: 'Áp suất (hPa)', color: 'orange' },
-                    { key: 'vibration', label: 'Rung chuyển', color: 'purple' }
-                ];
+                const traceRainPred = {
+                    x: futureTimestamps, y: predictedRainfall,
+                    type: 'scatter', mode: 'lines',
+                    name: 'Dự đoán lượng mưa', line: { color: 'green', dash: 'dash' }
+                };
 
-                const datasets = [];
-                let forecastLabels = [];
+                const traceSoilPred = {
+                    x: futureTimestamps, y: predictedSoilMoisture,
+                    type: 'scatter', mode: 'lines',
+                    name: 'Dự đoán độ ẩm đất', line: { color: 'orange', dash: 'dash' }
+                };
 
-                parameters.forEach(param => {
-                    const info = predictData.prediction[param.key];
-                    if (info && info.last_values && info.predicted_next) {
-                        const values = info.last_values.concat(info.predicted_next);
+                const layout = {
+                    title: 'Giám sát và dự đoán thiên tai',
+                    xaxis: { title: 'Thời gian' },
+                    yaxis: { title: 'Giá trị' }
+                };
 
-                        forecastLabels = Array.from({ length: values.length }, (_, i) =>
-                            i < info.last_values.length ? `Hiện tại ${i+1}` : `Dự báo ${i - info.last_values.length + 1}`
-                        );
+                Plotly.newPlot('disasterChart', [
+                    traceWater, traceRain, traceSoil,
+                    traceWaterPred, traceRainPred, traceSoilPred
+                ], layout);
 
-                        datasets.push({
-                            label: param.label,
-                            data: values,
-                            borderColor: param.color,
-                            fill: false,
-                            tension: 0.3
-                        });
-                    }
-                });
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: forecastLabels,
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Dự báo xu hướng các thông số môi trường (Holt-Winters)'
-                            },
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            });
+                // Display statistics
+                const stats = data.statistics;
+                const statsDiv = document.getElementById('statistics');
+                statsDiv.innerHTML = `
+                    <table>
+                        <thead><tr><th>Thông số</th><th>Giá trị</th></tr></thead>
+                        <tbody>
+                            <tr><td>Trung bình mực nước</td><td>${stats.water_mean.toFixed(1)} cm</td></tr>
+                            <tr><td>Trung bình lượng mưa</td><td>${stats.rainfall_mean.toFixed(1)} mm</td></tr>
+                            <tr><td>Trung bình độ ẩm đất</td><td>${stats.soil_moisture_mean.toFixed(1)} %</td></tr>
+                            <tr><td>Thời điểm tính toán</td><td>${stats.timestamp}</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            })
+            .catch(error => console.error('Lỗi khi lấy dữ liệu:', error));
     </script>
 </body>
 </html>
