@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Giám sát & Dự đoán Thiên tai</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
@@ -47,11 +47,51 @@
             color: white;
             margin-top: 30px;
         }
+        #alertSection {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        /* Các kiểu cảnh báo */
+        .alert-item {
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .alert-icon {
+            margin-right: 10px;
+            font-size: 1.4em;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
     </style>
 </head>
 <body>
 <div id="container">
     <h1>Hệ thống Giám sát & Dự đoán Thiên tai</h1>
+
+    <!-- Cảnh báo -->
+    <div id="alertSection">
+        <h2>Cảnh báo</h2>
+        <div id="alertList"></div>
+    </div>
 
     <!-- Biểu đồ -->
     <div class="chart">
@@ -99,6 +139,56 @@
 </div>
 
 <script>
+    function renderAlerts(alerts) {
+        const alertSection = document.getElementById('alertSection');
+        const alertList = document.getElementById('alertList');
+        alertList.innerHTML = '';
+
+        if (!alerts || alerts.length === 0) {
+            alertSection.style.display = 'none';
+            return;
+        }
+
+        alertSection.style.display = 'block';
+
+        alerts.forEach(alert => {
+            // Giả sử alert có dạng: { type: 'warning'|'danger'|'info', message: '...' }
+            // Nếu alert chỉ là chuỗi, ta mặc định kiểu warning
+            let type = 'warning';
+            let message = '';
+            if (typeof alert === 'string') {
+                message = alert;
+            } else {
+                type = alert.type || 'warning';
+                message = alert.message || '';
+            }
+
+            const div = document.createElement('div');
+            div.classList.add('alert-item');
+            if (type === 'danger') {
+                div.classList.add('alert-danger');
+            } else if (type === 'info') {
+                div.classList.add('alert-info');
+            } else {
+                div.classList.add('alert-warning');
+            }
+
+            const iconSpan = document.createElement('span');
+            iconSpan.classList.add('alert-icon');
+            if (type === 'danger') {
+                iconSpan.textContent = '⚠️';
+            } else if (type === 'info') {
+                iconSpan.textContent = '🔔';
+            } else {
+                iconSpan.textContent = '⚠️';
+            }
+
+            div.appendChild(iconSpan);
+            div.appendChild(document.createTextNode(message));
+            alertList.appendChild(div);
+        });
+    }
+
     async function loadData() {
         try {
             const [dataRes, predictRes] = await Promise.all([
@@ -108,6 +198,11 @@
 
             const data = await dataRes.json();
             const predict = await predictRes.json();
+
+            // ==== Hiển thị cảnh báo ====
+            // Nếu server trả về alerts là mảng các string hoặc object {type, message}
+            const alerts = predict.alerts || [];
+            renderAlerts(alerts);
 
             // ==== Hiển thị bảng dữ liệu ====
             const tbody = document.querySelector('#dataTable tbody');
@@ -135,13 +230,12 @@
             }
 
             // ==== Hiển thị biểu đồ ====
-// ==== Hiển thị biểu đồ toàn bộ dữ liệu + dự đoán ====
             const layout = {
                 title: 'Dữ liệu thực tế và Dự đoán xu hướng',
                 xaxis: { title: 'Thời gian' },
                 yaxis: { title: 'Giá trị' }
             };
-            
+
             const traces = [];
             const colors = {
                 temperature: 'red',
@@ -155,8 +249,7 @@
                 gyro_y: 'gray',
                 gyro_z: 'cyan'
             };
-            
-            // Dữ liệu thực tế từ /data (toàn bộ chuỗi thời gian)
+
             function addActualTrace(field, label) {
                 if (data[`${field}s`] && data.timestamps) {
                     traces.push({
@@ -168,8 +261,7 @@
                     });
                 }
             }
-            
-            // Dự đoán từ /predict
+
             function addPredictedTrace(field, label) {
                 const pred = predict.prediction[field];
                 if (pred && pred.predicted_next) {
@@ -183,8 +275,7 @@
                     });
                 }
             }
-            
-            // Các thông số cần hiển thị
+
             const fields = {
                 temperature: 'Nhiệt độ',
                 humidity: 'Độ ẩm',
@@ -197,19 +288,15 @@
                 gyro_y: 'Gyro Y',
                 gyro_z: 'Gyro Z'
             };
-            
-            // Thêm trace thực và dự đoán
+
             for (const field in fields) {
                 addActualTrace(field, fields[field]);
                 addPredictedTrace(field, fields[field]);
             }
-            
+
             Plotly.newPlot('multiLineChart', traces, layout);
 
-
-
-
-            // ==== Hiển thị thống kê ====
+            // ==== Thống kê ====
             const stats = predict.statistics;
             let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
             for (const key in stats) {
@@ -230,7 +317,6 @@
             let corrHTML = '<table><thead><tr><th></th>';
             params.forEach(p => corrHTML += `<th>${p}</th>`);
             corrHTML += '</tr></thead><tbody>';
-
             params.forEach(row => {
                 corrHTML += `<tr><td>${row}</td>`;
                 params.forEach(col => {
@@ -246,7 +332,11 @@
         }
     }
 
+    // Tải lần đầu
     loadData();
+
+    // Tự động cập nhật mỗi 10 giây
+    setInterval(loadData, 10000);
 </script>
 </body>
 </html>
