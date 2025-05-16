@@ -214,6 +214,27 @@
                     line: { color: '#00CED1' }
                 }
             ];
+            for (const key in predict.prediction) {
+            const item = predict.prediction[key];
+            if (!item.predicted_next) continue;
+        
+            // Lấy thời gian cuối cùng từ dữ liệu thật
+            const lastTimestamp = new Date(data.timestamps[data.timestamps.length - 1]);
+        
+            // Tạo mảng thời gian tương ứng với số giá trị dự đoán
+            const predictedTimestamps = item.predicted_next.map((_, i) => {
+                const futureTime = new Date(lastTimestamp.getTime() + (i + 1) * 60 * 1000); // giả sử mỗi phút có 1 bản ghi
+                return futureTime.toISOString();
+            });
+        
+            traces.push({
+                    x: predictedTimestamps,
+                    y: item.predicted_next,
+                    mode: 'lines',
+                    name: `${key} (dự đoán)`,
+                    line: { dash: 'dot', color: colors[key] || 'gray' }
+                });
+            }
             
             Plotly.newPlot('multiLineChart', traces, layout);
 
