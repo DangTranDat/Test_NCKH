@@ -102,6 +102,7 @@ def predict_trend():
         df = df.sort_values('timestamp')
         result = {}
         stats = {}
+        alerts = []
 
         forecast_steps = 5
         parameters = ['temperature', 'humidity', 'water_level', 'rain_level',
@@ -129,6 +130,22 @@ def predict_trend():
                 'min': round(np.min(series), 2),
                 'max': round(np.max(series), 2)
             }
+        
+        # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
+        last = df.iloc[-1]
+
+        if last['temperature'] > 35:
+            alerts.append("Cảnh báo: Nhiệt độ cao vượt ngưỡng 35°C")
+
+        if last['humidity'] < 30:
+            alerts.append("Cảnh báo: Độ ẩm thấp dưới 30%")
+
+        if last['water_level'] > 80:
+            alerts.append("Cảnh báo: Mực nước vượt ngưỡng an toàn")
+        
+        if last['vibration'] > 1.5:
+            alerts.append("Cảnh báo: Rung động mạnh vượt ngưỡng")
+
 
         # Ma trận tương quan
         corr_matrix = df[parameters].corr().round(2).to_dict()
@@ -137,7 +154,8 @@ def predict_trend():
             'prediction': result,
             'statistics': stats,
             'correlation_matrix': corr_matrix,
-            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S")
+            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S"),
+            'alerts': alerts
         })
 
     except Exception as e:
