@@ -1,186 +1,258 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giám sát lũ lụt và sạt lở</title>
+    <title>Air Quality Monitoring</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background-color: #f0f5f9;
+            background-color: #f4f7fa;
             color: #333;
         }
         #content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             max-width: 1200px;
-            margin: auto;
-            padding: 30px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
-            text-align: center;
-            color: #2c3e50;
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 20px;
         }
         .section {
-            margin-top: 40px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .section h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #333;
         }
         .chart {
             width: 100%;
             height: 400px;
+            margin-bottom: 30px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        table, th, td {
+            border: 1px solid #ddd;
         }
         th, td {
-            padding: 12px;
+            padding: 12px 15px;
             text-align: center;
-            border: 1px solid #ccc;
         }
         th {
-            background-color: #f7f7f7;
+            background-color: #f4f4f4;
+            color: #555;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        #correlationMatrix, #statistics {
+            font-size: 1em;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        .forecast-info {
+            font-size: 0.9em;
+            color: #555;
         }
         .footer {
-            margin-top: 50px;
             text-align: center;
-            padding: 15px;
-            background-color: #2c3e50;
-            color: #fff;
+            padding: 20px;
+            font-size: 0.9em;
+            background-color: #333;
+            color: white;
+            width: 100%;
         }
     </style>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div id="content">
-        <h1>Giám sát lũ lụt và sạt lở</h1>
+        <h1>Giám sát không khí</h1>
 
-        <div class="section">
-            <h2>Biểu đồ các thông số</h2>
-            <div id="disasterChart" class="chart"></div>
-            <p><em>Các đường đứt nét biểu thị xu hướng dự đoán.</em></p>
+        <div class="section" id="chartContainer">
+            <div id="airQualityChart" class="chart"></div>
+            <div class="forecast-info">
+                <p><strong>Ghi chú:</strong> Các đường kẻ chấm biểu thị dự đoán xu hướng chất lượng không khí, nhiệt độ và độ ẩm trong tương lai.</p>
+            </div>
         </div>
 
-        <div class="section">
-            <h2>Bảng dữ liệu hiện tại</h2>
+        <div class="section" id="dataTableContainer">
+            <h2>Thông số hiện tại</h2>
             <table id="dataTable">
                 <thead>
                     <tr>
-                        <th>Thời gian</th>
-                        <th>Mực nước (cm)</th>
-                        <th>Lượng mưa (mm)</th>
-                        <th>Độ ẩm đất (%)</th>
+                        <th>Timestamp</th>
+                        <th>Chất lượng không khí (ppm)</th>
+                        <th>Nhiệt độ (°C)</th>
+                        <th>Độ ẩm (%)</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
         </div>
 
-        <div class="section">
-            <h2>Thống kê tổng hợp</h2>
-            <div id="statistics"></div>
+        <div class="section" id="correlationMatrixContainer">
+            <h2>Tương quan giữa các thông số</h2>
+            <div id="correlationMatrix" class="table-container"></div>
+        </div>
+
+        <div class="section" id="statisticsContainer">
+            <h2>Thống kê chất lượng không khí</h2>
+            <div id="statistics" class="table-container"></div>
         </div>
     </div>
 
     <div class="footer">
-        &copy; 2025 Giám sát thiên tai - Nhóm phát triển IoT
+        <p>&copy; 2024 Giám sát không khí - Tất cả quyền được bảo lưu.</p>
     </div>
 
     <script>
         fetch('/api/chart-data')
             .then(response => response.json())
             .then(data => {
+                const airQuality = data.AirQuality;
+                const temperature = data.Temperature;
+                const humidity = data.Humidity;
                 const timestamps = data.timestamps;
-                const waterLevel = data.water_level;
-                const rainfall = data.rainfall;
-                const soilMoisture = data.soil_moisture;
+                const futureTimestamps = data.FutureTimestamps;
+                const airQualityPrediction = data.AirQualityTrendPrediction;
+                const temperaturePrediction = data.TemperatureTrendPrediction;
+                const humidityPrediction = data.HumidityTrendPrediction;
+                const correlationMatrix = data.CorrelationMatrix;
+                const statistics = data.Statistics;
 
-                const futureTimestamps = data.future_timestamps;
-                const predictedWaterLevel = data.predicted_water_level;
-                const predictedRainfall = data.predicted_rainfall;
-                const predictedSoilMoisture = data.predicted_soil_moisture;
-
-                // Populate table
-                const tableBody = document.querySelector('#dataTable tbody');
+                const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+                const displayDataCount = 20;
                 tableBody.innerHTML = '';
-                const displayCount = 20;
-                const start = Math.max(0, timestamps.length - displayCount);
-                for (let i = start; i < timestamps.length; i++) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${timestamps[i]}</td>
-                        <td>${waterLevel[i]}</td>
-                        <td>${rainfall[i]}</td>
-                        <td>${soilMoisture[i]}</td>
-                    `;
-                    tableBody.appendChild(row);
+                for (let i = Math.max(0, timestamps.length - displayDataCount); i < timestamps.length; i++) {
+                    const row = tableBody.insertRow();
+                    row.insertCell(0).innerText = timestamps[i];
+                    row.insertCell(1).innerText = airQuality[i];
+                    row.insertCell(2).innerText = temperature[i];
+                    row.insertCell(3).innerText = humidity[i];
                 }
 
-                // Plot chart
-                const traceWater = {
-                    x: timestamps, y: waterLevel,
-                    type: 'scatter', mode: 'lines+markers',
-                    name: 'Mực nước (cm)', line: { color: 'blue' }
+                const trace1 = {
+                    x: timestamps,
+                    y: airQuality,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Air Quality (ppm)',
+                    line: { color: 'rgb(75, 192, 192)' }
                 };
 
-                const traceRain = {
-                    x: timestamps, y: rainfall,
-                    type: 'scatter', mode: 'lines+markers',
-                    name: 'Lượng mưa (mm)', line: { color: 'green' }
+                const trace2 = {
+                    x: timestamps,
+                    y: temperature,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Temperature (°C)',
+                    line: { color: 'rgb(255, 99, 132)' }
                 };
 
-                const traceSoil = {
-                    x: timestamps, y: soilMoisture,
-                    type: 'scatter', mode: 'lines+markers',
-                    name: 'Độ ẩm đất (%)', line: { color: 'orange' }
+                const trace3 = {
+                    x: timestamps,
+                    y: humidity,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Humidity (%)',
+                    line: { color: 'rgb(54, 162, 235)' }
                 };
 
-                const traceWaterPred = {
-                    x: futureTimestamps, y: predictedWaterLevel,
-                    type: 'scatter', mode: 'lines',
-                    name: 'Dự đoán mực nước', line: { color: 'blue', dash: 'dash' }
+                const forecastAirQuality = {
+                    x: futureTimestamps,
+                    y: airQualityPrediction,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Predicted Air Quality',
+                    line: { color: 'rgb(153, 102, 255)', dash: 'dash' }
                 };
 
-                const traceRainPred = {
-                    x: futureTimestamps, y: predictedRainfall,
-                    type: 'scatter', mode: 'lines',
-                    name: 'Dự đoán lượng mưa', line: { color: 'green', dash: 'dash' }
+                const forecastTemperature = {
+                    x: futureTimestamps,
+                    y: temperaturePrediction,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Predicted Temperature',
+                    line: { color: 'rgb(255, 159, 64)', dash: 'dash' }
                 };
 
-                const traceSoilPred = {
-                    x: futureTimestamps, y: predictedSoilMoisture,
-                    type: 'scatter', mode: 'lines',
-                    name: 'Dự đoán độ ẩm đất', line: { color: 'orange', dash: 'dash' }
+                const forecastHumidity = {
+                    x: futureTimestamps,
+                    y: humidityPrediction,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Predicted Humidity',
+                    line: { color: 'rgb(255, 205, 86)', dash: 'dash' }
                 };
 
                 const layout = {
-                    title: 'Giám sát và dự đoán thiên tai',
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' }
+                    title: 'Air Quality Monitoring and Prediction',
+                    xaxis: { title: 'Timestamp' },
+                    yaxis: { title: 'Values' },
+                    showlegend: true
                 };
 
-                Plotly.newPlot('disasterChart', [
-                    traceWater, traceRain, traceSoil,
-                    traceWaterPred, traceRainPred, traceSoilPred
+                Plotly.newPlot('airQualityChart', [
+                    trace1, trace2, trace3,
+                    forecastAirQuality, forecastTemperature, forecastHumidity
                 ], layout);
 
-                // Display statistics
-                const stats = data.statistics;
-                const statsDiv = document.getElementById('statistics');
-                statsDiv.innerHTML = `
+                const correlationMatrixDiv = document.getElementById('correlationMatrix');
+                let correlationHtml = '<table><thead><tr><th></th><th>Air Quality</th><th>Temperature</th><th>Humidity</th></tr></thead><tbody>';
+                const keys = ['air_quality', 'temperature', 'humidity'];
+                keys.forEach(key1 => {
+                    correlationHtml += `<tr><td>${key1}</td>`;
+                    keys.forEach(key2 => {
+                        const corr = correlationMatrix[key1][key2];
+                        correlationHtml += `<td>${corr.toFixed(2)}</td>`;
+                    });
+                    correlationHtml += '</tr>';
+                });
+                correlationHtml += '</tbody></table>';
+                correlationMatrixDiv.innerHTML = correlationHtml;
+
+                const statisticsDiv = document.getElementById('statistics');
+                const statsHtml = `
                     <table>
-                        <thead><tr><th>Thông số</th><th>Giá trị</th></tr></thead>
+                        <thead>
+                            <tr><th>Parameter</th><th>Value</th></tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Trung bình mực nước</td><td>${stats.water_mean.toFixed(1)} cm</td></tr>
-                            <tr><td>Trung bình lượng mưa</td><td>${stats.rainfall_mean.toFixed(1)} mm</td></tr>
-                            <tr><td>Trung bình độ ẩm đất</td><td>${stats.soil_moisture_mean.toFixed(1)} %</td></tr>
-                            <tr><td>Thời điểm tính toán</td><td>${stats.timestamp}</td></tr>
+                            <tr><td>Nhiệt độ trung bình</td><td>${statistics.temperature_mean.toFixed(1)}</td></tr>
+                            <tr><td>Độ ẩm trung bình</td><td>${statistics.humidity_mean.toFixed(1)}</td></tr>
+                            <tr><td>Chất lượng không khí trung bình</td><td>${statistics.air_quality_mean.toFixed(1)}</td></tr>
+                            <tr><td>Độ lệch chuẩn nhiệt độ</td><td>${statistics.temperature_std.toFixed(1)}</td></tr>
+                            <tr><td>Độ lệch chuẩn độ ẩm</td><td>${statistics.humidity_std.toFixed(1)}</td></tr>
+                            <tr><td>Độ lệch chuẩn chất lượng không khí</td><td>${statistics.air_quality_std.toFixed(1)}</td></tr>
+                            <tr><td>Thời điểm tính toán</td><td>${statistics.timestamp}</td></tr>
                         </tbody>
                     </table>
                 `;
+                statisticsDiv.innerHTML = statsHtml;
             })
-            .catch(error => console.error('Lỗi khi lấy dữ liệu:', error));
+            .catch(error => console.error('Error fetching data:', error));
     </script>
 </body>
 </html>
