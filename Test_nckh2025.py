@@ -98,5 +98,43 @@ def upload_data():
         print("Lỗi khi ghi dữ liệu:", e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/predict')
+def predict_trend():
+    try:
+        conn = get_connection()
+        query = """
+            SELECT timestamp, water_level, rain_level, soil_moisture
+            FROM nckh2025
+            ORDER BY timestamp DESC
+            LIMIT 50
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df = df.sort_values('timestamp')  # sắp xếp theo thời gian tăng dần
+        result = {}
+
+        for col in ['water_level', 'rain_level', 'soil_moisture']:
+            series = df[col].astype(float)
+
+            if len(series) < 10:
+                result[col] = {'error': 'Không đủ dữ liệu để dự đoán'}
+                continue
+
+            model = ExponentialSmoothing(series, trend='add', seasonal=None, initialization_method="estimated")
+            fit = model.fit()
+            prediction = fit.forecast(steps=3)
+
+            result[col] = {
+                'last_values': series[-5:].tolist(),
+                'predicted_next': prediction.tolist()
+            }
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("Lỗi khi dự đoán:", e)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000)
