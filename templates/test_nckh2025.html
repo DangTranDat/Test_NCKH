@@ -135,47 +135,88 @@
             }
 
             // ==== Hiển thị biểu đồ ====
+            // ==== Biểu đồ toàn bộ dữ liệu từ API /data ====
             const layout = {
-                title: 'Dữ liệu và Dự đoán',
-                xaxis: { title: 'Thời gian' },
-                yaxis: { title: 'Giá trị' }
+                title: 'Toàn bộ dữ liệu các thông số môi trường',
+                xaxis: { title: 'Thời gian', tickangle: -45 },
+                yaxis: { title: 'Giá trị đo được' }
             };
             
-            const traces = [];
-            const colors = {
-                temperature: 'red',
-                humidity: 'blue',
-                water_level: 'green',
-                rain_level: 'orange',
-                soil_moisture: 'purple',
-                pressure: 'brown',
-                vibration: 'teal'
-            };
-            
-            for (const key in predict.prediction) {
-                const item = predict.prediction[key];
-                if (!item.predicted_next) continue;
-            
-                // Dữ liệu thực
-                traces.push({
-                    x: Array.from({length: item.last_values.length}, (_, i) => `T-${item.last_values.length - i}`),
-                    y: item.last_values,
+            const traces = [
+                {
+                    x: data.timestamps,
+                    y: data.temperatures,
                     mode: 'lines+markers',
-                    name: key + ' (thực)',
-                    line: { color: colors[key] || 'gray' }
-                });
-            
-                // Dự đoán
-                traces.push({
-                    x: Array.from({length: item.predicted_next.length}, (_, i) => `T+${i+1}`),
-                    y: item.predicted_next,
-                    mode: 'lines',
-                    name: key + ' (dự đoán)',
-                    line: { dash: 'dot', color: colors[key] || 'gray' }
-                });
-            }
+                    name: 'Nhiệt độ (°C)',
+                    line: { color: 'red' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.humidities,
+                    mode: 'lines+markers',
+                    name: 'Độ ẩm (%)',
+                    line: { color: 'blue' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.water_levels,
+                    mode: 'lines+markers',
+                    name: 'Mực nước',
+                    line: { color: 'green' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.rains_level,
+                    mode: 'lines+markers',
+                    name: 'Lượng mưa',
+                    line: { color: 'orange' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.soil_moistures,
+                    mode: 'lines+markers',
+                    name: 'Độ ẩm đất',
+                    line: { color: 'purple' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.pressures,
+                    mode: 'lines+markers',
+                    name: 'Áp suất',
+                    line: { color: 'brown' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.vibrations,
+                    mode: 'lines+markers',
+                    name: 'Rung động',
+                    line: { color: 'teal' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.gyro_xs,
+                    mode: 'lines+markers',
+                    name: 'Gyro X',
+                    line: { color: 'gray' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.gyro_ys,
+                    mode: 'lines+markers',
+                    name: 'Gyro Y',
+                    line: { color: 'black' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.gyro_zs,
+                    mode: 'lines+markers',
+                    name: 'Gyro Z',
+                    line: { color: '#00CED1' }
+                }
+            ];
             
             Plotly.newPlot('multiLineChart', traces, layout);
+
 
 
             // ==== Hiển thị thống kê ====
