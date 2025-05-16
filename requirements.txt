@@ -1,3 +1,6 @@
 Flask
 psycopg2-binary
 gunicorn
+pandas
+numpy
+statsmodels
