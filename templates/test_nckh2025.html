@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Quality Monitoring</title>
+    <title>Giám sát và Dự báo Thời gian thực</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,247 +12,181 @@
             color: #333;
         }
         #content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             max-width: 1200px;
             margin: 30px auto;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
+            text-align: center;
             font-size: 2.5em;
-            color: #333;
-            margin-bottom: 20px;
         }
         .section {
-            width: 100%;
-            margin: 20px 0;
-        }
-        .section h2 {
-            font-size: 1.8em;
-            margin-bottom: 10px;
-            color: #333;
+            margin: 30px 0;
         }
         .chart {
-            width: 100%;
             height: 400px;
-            margin-bottom: 30px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        }
-        table, th, td {
-            border: 1px solid #ddd;
+            margin-bottom: 20px;
         }
         th, td {
-            padding: 12px 15px;
+            border: 1px solid #ccc;
+            padding: 10px;
             text-align: center;
         }
         th {
             background-color: #f4f4f4;
-            color: #555;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-        #correlationMatrix, #statistics {
-            font-size: 1em;
-            margin-top: 20px;
-            overflow-x: auto;
         }
         .table-container {
             overflow-x: auto;
         }
-        .forecast-info {
-            font-size: 0.9em;
-            color: #555;
-        }
         .footer {
             text-align: center;
             padding: 20px;
-            font-size: 0.9em;
-            background-color: #333;
-            color: white;
-            width: 100%;
+            background: #333;
+            color: #fff;
         }
     </style>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div id="content">
-        <h1>Giám sát không khí</h1>
+        <h1>Giám sát & Dự báo Thiên tai</h1>
 
-        <div class="section" id="chartContainer">
-            <div id="airQualityChart" class="chart"></div>
-            <div class="forecast-info">
-                <p><strong>Ghi chú:</strong> Các đường kẻ chấm biểu thị dự đoán xu hướng chất lượng không khí, nhiệt độ và độ ẩm trong tương lai.</p>
+        <div class="section">
+            <div id="envChart" class="chart"></div>
+        </div>
+
+        <div class="section">
+            <h2>Dữ liệu Gần đây</h2>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Nhiệt độ (°C)</th>
+                            <th>Độ ẩm (%)</th>
+                            <th>Mực nước</th>
+                            <th>Lượng mưa</th>
+                            <th>Độ ẩm đất</th>
+                            <th>Áp suất</th>
+                            <th>Rung</th>
+                            <th>Gyro X</th>
+                            <th>Gyro Y</th>
+                            <th>Gyro Z</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="section" id="dataTableContainer">
-            <h2>Thông số hiện tại</h2>
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Chất lượng không khí (ppm)</th>
-                        <th>Nhiệt độ (°C)</th>
-                        <th>Độ ẩm (%)</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="section" id="correlationMatrixContainer">
-            <h2>Tương quan giữa các thông số</h2>
-            <div id="correlationMatrix" class="table-container"></div>
-        </div>
-
-        <div class="section" id="statisticsContainer">
-            <h2>Thống kê chất lượng không khí</h2>
+        <div class="section">
+            <h2>Thống kê</h2>
             <div id="statistics" class="table-container"></div>
+        </div>
+
+        <div class="section">
+            <h2>Ma trận tương quan</h2>
+            <div id="correlationMatrix" class="table-container"></div>
         </div>
     </div>
 
     <div class="footer">
-        <p>&copy; 2024 Giám sát không khí - Tất cả quyền được bảo lưu.</p>
+        <p>&copy; 2025 Hệ thống dự báo thiên tai</p>
     </div>
 
     <script>
-        fetch('/api/chart-data')
-            .then(response => response.json())
-            .then(data => {
-                const airQuality = data.AirQuality;
-                const temperature = data.Temperature;
-                const humidity = data.Humidity;
-                const timestamps = data.timestamps;
-                const futureTimestamps = data.FutureTimestamps;
-                const airQualityPrediction = data.AirQualityTrendPrediction;
-                const temperaturePrediction = data.TemperatureTrendPrediction;
-                const humidityPrediction = data.HumidityTrendPrediction;
-                const correlationMatrix = data.CorrelationMatrix;
-                const statistics = data.Statistics;
+        function loadData() {
+            fetch('/data')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#dataTable tbody');
+                    tbody.innerHTML = '';
+                    for (let i = 0; i < data.timestamps.length; i++) {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${data.timestamps[i]}</td>
+                            <td>${data.temperatures[i]}</td>
+                            <td>${data.humidities[i]}</td>
+                            <td>${data.water_levels[i]}</td>
+                            <td>${data.rains_level[i]}</td>
+                            <td>${data.soil_moistures[i]}</td>
+                            <td>${data.pressures[i]}</td>
+                            <td>${data.vibrations[i]}</td>
+                            <td>${data.gyro_xs[i]}</td>
+                            <td>${data.gyro_ys[i]}</td>
+                            <td>${data.gyro_zs[i]}</td>
+                        `;
+                    }
 
-                const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
-                const displayDataCount = 20;
-                tableBody.innerHTML = '';
-                for (let i = Math.max(0, timestamps.length - displayDataCount); i < timestamps.length; i++) {
-                    const row = tableBody.insertRow();
-                    row.insertCell(0).innerText = timestamps[i];
-                    row.insertCell(1).innerText = airQuality[i];
-                    row.insertCell(2).innerText = temperature[i];
-                    row.insertCell(3).innerText = humidity[i];
-                }
-
-                const trace1 = {
-                    x: timestamps,
-                    y: airQuality,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Air Quality (ppm)',
-                    line: { color: 'rgb(75, 192, 192)' }
-                };
-
-                const trace2 = {
-                    x: timestamps,
-                    y: temperature,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Temperature (°C)',
-                    line: { color: 'rgb(255, 99, 132)' }
-                };
-
-                const trace3 = {
-                    x: timestamps,
-                    y: humidity,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Humidity (%)',
-                    line: { color: 'rgb(54, 162, 235)' }
-                };
-
-                const forecastAirQuality = {
-                    x: futureTimestamps,
-                    y: airQualityPrediction,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Predicted Air Quality',
-                    line: { color: 'rgb(153, 102, 255)', dash: 'dash' }
-                };
-
-                const forecastTemperature = {
-                    x: futureTimestamps,
-                    y: temperaturePrediction,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Predicted Temperature',
-                    line: { color: 'rgb(255, 159, 64)', dash: 'dash' }
-                };
-
-                const forecastHumidity = {
-                    x: futureTimestamps,
-                    y: humidityPrediction,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Predicted Humidity',
-                    line: { color: 'rgb(255, 205, 86)', dash: 'dash' }
-                };
-
-                const layout = {
-                    title: 'Air Quality Monitoring and Prediction',
-                    xaxis: { title: 'Timestamp' },
-                    yaxis: { title: 'Values' },
-                    showlegend: true
-                };
-
-                Plotly.newPlot('airQualityChart', [
-                    trace1, trace2, trace3,
-                    forecastAirQuality, forecastTemperature, forecastHumidity
-                ], layout);
-
-                const correlationMatrixDiv = document.getElementById('correlationMatrix');
-                let correlationHtml = '<table><thead><tr><th></th><th>Air Quality</th><th>Temperature</th><th>Humidity</th></tr></thead><tbody>';
-                const keys = ['air_quality', 'temperature', 'humidity'];
-                keys.forEach(key1 => {
-                    correlationHtml += `<tr><td>${key1}</td>`;
-                    keys.forEach(key2 => {
-                        const corr = correlationMatrix[key1][key2];
-                        correlationHtml += `<td>${corr.toFixed(2)}</td>`;
+                    Plotly.newPlot('envChart', [
+                        {
+                            x: data.timestamps,
+                            y: data.water_levels,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Mực nước',
+                            line: { color: 'blue' }
+                        },
+                        {
+                            x: data.timestamps,
+                            y: data.rains_level,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Lượng mưa',
+                            line: { color: 'green' }
+                        },
+                        {
+                            x: data.timestamps,
+                            y: data.soil_moistures,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: 'Độ ẩm đất',
+                            line: { color: 'brown' }
+                        }
+                    ], {
+                        title: 'Biểu đồ mực nước, lượng mưa và độ ẩm đất',
+                        xaxis: { title: 'Thời gian' },
+                        yaxis: { title: 'Giá trị' }
                     });
-                    correlationHtml += '</tr>';
                 });
-                correlationHtml += '</tbody></table>';
-                correlationMatrixDiv.innerHTML = correlationHtml;
+        }
 
-                const statisticsDiv = document.getElementById('statistics');
-                const statsHtml = `
-                    <table>
-                        <thead>
-                            <tr><th>Parameter</th><th>Value</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Nhiệt độ trung bình</td><td>${statistics.temperature_mean.toFixed(1)}</td></tr>
-                            <tr><td>Độ ẩm trung bình</td><td>${statistics.humidity_mean.toFixed(1)}</td></tr>
-                            <tr><td>Chất lượng không khí trung bình</td><td>${statistics.air_quality_mean.toFixed(1)}</td></tr>
-                            <tr><td>Độ lệch chuẩn nhiệt độ</td><td>${statistics.temperature_std.toFixed(1)}</td></tr>
-                            <tr><td>Độ lệch chuẩn độ ẩm</td><td>${statistics.humidity_std.toFixed(1)}</td></tr>
-                            <tr><td>Độ lệch chuẩn chất lượng không khí</td><td>${statistics.air_quality_std.toFixed(1)}</td></tr>
-                            <tr><td>Thời điểm tính toán</td><td>${statistics.timestamp}</td></tr>
-                        </tbody>
-                    </table>
-                `;
-                statisticsDiv.innerHTML = statsHtml;
-            })
-            .catch(error => console.error('Error fetching data:', error));
+        function loadPrediction() {
+            fetch('/predict')
+                .then(res => res.json())
+                .then(data => {
+                    const stats = data.statistics;
+                    const statDiv = document.getElementById('statistics');
+                    statDiv.innerHTML = '<table><thead><tr><th>Thông số</th><th>Giá trị</th></tr></thead><tbody>' +
+                        Object.entries(stats).map(([key, val]) =>
+                            `<tr><td>${key}</td><td>${val}</td></tr>`
+                        ).join('') + '</tbody></table>';
+
+                    const corr = data.correlation_matrix;
+                    const keys = Object.keys(corr);
+                    let corrHtml = '<table><thead><tr><th></th>' +
+                        keys.map(k => `<th>${k}</th>`).join('') + '</tr></thead><tbody>';
+                    keys.forEach(k1 => {
+                        corrHtml += `<tr><td>${k1}</td>` +
+                            keys.map(k2 => `<td>${corr[k1][k2]}</td>`).join('') + '</tr>';
+                    });
+                    corrHtml += '</tbody></table>';
+                    document.getElementById('correlationMatrix').innerHTML = corrHtml;
+                });
+        }
+
+        loadData();
+        loadPrediction();
+        setInterval(() => {
+            loadData();
+            loadPrediction();
+        }, 60000);
     </script>
 </body>
 </html>
