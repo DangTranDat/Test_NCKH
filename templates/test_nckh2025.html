@@ -135,108 +135,77 @@
             }
 
             // ==== Hiển thị biểu đồ ====
-            // ==== Biểu đồ toàn bộ dữ liệu từ API /data ====
+// ==== Hiển thị biểu đồ toàn bộ dữ liệu + dự đoán ====
             const layout = {
-                title: 'Toàn bộ dữ liệu các thông số môi trường',
-                xaxis: { title: 'Thời gian', tickangle: -45 },
-                yaxis: { title: 'Giá trị đo được' }
+                title: 'Dữ liệu thực tế và Dự đoán xu hướng',
+                xaxis: { title: 'Thời gian' },
+                yaxis: { title: 'Giá trị' }
             };
             
-            const traces = [
-                {
-                    x: data.timestamps,
-                    y: data.temperatures,
-                    mode: 'lines+markers',
-                    name: 'Nhiệt độ (°C)',
-                    line: { color: 'red' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.humidities,
-                    mode: 'lines+markers',
-                    name: 'Độ ẩm (%)',
-                    line: { color: 'blue' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.water_levels,
-                    mode: 'lines+markers',
-                    name: 'Mực nước',
-                    line: { color: 'green' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.rains_level,
-                    mode: 'lines+markers',
-                    name: 'Lượng mưa',
-                    line: { color: 'orange' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.soil_moistures,
-                    mode: 'lines+markers',
-                    name: 'Độ ẩm đất',
-                    line: { color: 'purple' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.pressures,
-                    mode: 'lines+markers',
-                    name: 'Áp suất',
-                    line: { color: 'brown' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.vibrations,
-                    mode: 'lines+markers',
-                    name: 'Rung động',
-                    line: { color: 'teal' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.gyro_xs,
-                    mode: 'lines+markers',
-                    name: 'Gyro X',
-                    line: { color: 'gray' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.gyro_ys,
-                    mode: 'lines+markers',
-                    name: 'Gyro Y',
-                    line: { color: 'black' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.gyro_zs,
-                    mode: 'lines+markers',
-                    name: 'Gyro Z',
-                    line: { color: '#00CED1' }
+            const traces = [];
+            const colors = {
+                temperature: 'red',
+                humidity: 'blue',
+                water_level: 'green',
+                rain_level: 'orange',
+                soil_moisture: 'purple',
+                pressure: 'brown',
+                vibration: 'teal',
+                gyro_x: 'pink',
+                gyro_y: 'gray',
+                gyro_z: 'cyan'
+            };
+            
+            // Dữ liệu thực tế từ /data (toàn bộ chuỗi thời gian)
+            function addActualTrace(field, label) {
+                if (data[`${field}s`] && data.timestamps) {
+                    traces.push({
+                        x: data.timestamps,
+                        y: data[`${field}s`],
+                        mode: 'lines+markers',
+                        name: `${label} (thực tế)`,
+                        line: { color: colors[field] || 'gray' }
+                    });
                 }
-            ];
-            for (const key in predict.prediction) {
-            const item = predict.prediction[key];
-            if (!item.predicted_next) continue;
-        
-            // Lấy thời gian cuối cùng từ dữ liệu thật
-            const lastTimestamp = new Date(data.timestamps[data.timestamps.length - 1]);
-        
-            // Tạo mảng thời gian tương ứng với số giá trị dự đoán
-            const predictedTimestamps = item.predicted_next.map((_, i) => {
-                const futureTime = new Date(lastTimestamp.getTime() + (i + 1) * 60 * 1000); // giả sử mỗi phút có 1 bản ghi
-                return futureTime.toISOString();
-            });
-        
-            traces.push({
-                    x: predictedTimestamps,
-                    y: item.predicted_next,
-                    mode: 'lines',
-                    name: `${key} (dự đoán)`,
-                    line: { dash: 'dot', color: colors[key] || 'gray' }
-                });
+            }
+            
+            // Dự đoán từ /predict
+            function addPredictedTrace(field, label) {
+                const pred = predict.prediction[field];
+                if (pred && pred.predicted_next) {
+                    const futureX = pred.predicted_next.map((_, i) => `T+${i + 1}`);
+                    traces.push({
+                        x: futureX,
+                        y: pred.predicted_next,
+                        mode: 'lines',
+                        name: `${label} (dự đoán)`,
+                        line: { dash: 'dot', color: colors[field] || 'gray' }
+                    });
+                }
+            }
+            
+            // Các thông số cần hiển thị
+            const fields = {
+                temperature: 'Nhiệt độ',
+                humidity: 'Độ ẩm',
+                water_level: 'Mực nước',
+                rain_level: 'Lượng mưa',
+                soil_moisture: 'Độ ẩm đất',
+                pressure: 'Áp suất',
+                vibration: 'Rung động',
+                gyro_x: 'Gyro X',
+                gyro_y: 'Gyro Y',
+                gyro_z: 'Gyro Z'
+            };
+            
+            // Thêm trace thực và dự đoán
+            for (const field in fields) {
+                addActualTrace(field, fields[field]);
+                addPredictedTrace(field, fields[field]);
             }
             
             Plotly.newPlot('multiLineChart', traces, layout);
+
 
 
 
