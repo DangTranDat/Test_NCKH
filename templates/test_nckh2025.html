@@ -136,7 +136,7 @@
 
             // ==== Hiển thị biểu đồ ====
             const layout = {
-                title: 'Dữ liệu và Dự đoán (50 giá trị gần nhất)',
+                title: 'Dữ liệu và Dự đoán',
                 xaxis: { title: 'Thời gian' },
                 yaxis: { title: 'Giá trị' }
             };
@@ -156,13 +156,10 @@
                 const item = predict.prediction[key];
                 if (!item.predicted_next) continue;
             
-                // Lấy 50 giá trị cuối cùng
-                const lastValues = item.last_values.slice(-50);
-            
                 // Dữ liệu thực
                 traces.push({
-                    x: Array.from({length: lastValues.length}, (_, i) => `T-${lastValues.length - i}`),
-                    y: lastValues,
+                    x: Array.from({length: item.last_values.length}, (_, i) => `T-${item.last_values.length - i}`),
+                    y: item.last_values,
                     mode: 'lines+markers',
                     name: key + ' (thực)',
                     line: { color: colors[key] || 'gray' }
@@ -177,6 +174,7 @@
                     line: { dash: 'dot', color: colors[key] || 'gray' }
                 });
             }
+            
             Plotly.newPlot('multiLineChart', traces, layout);
 
 
