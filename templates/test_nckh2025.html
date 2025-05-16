@@ -28,184 +28,155 @@
 <body>
     <h2>Hệ thống giám sát và cảnh báo sớm lũ lụt - sạt lở</h2>
 
-    <div class="chart-container">
-        <canvas id="tempHumChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="waterLevelChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="pressureAltitudeChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="accelerationChart"></canvas>
-    </div>
-    <div class="chart-container">
-        <canvas id="rainVibrationChart"></canvas>
-    </div>
+    <!-- Dữ liệu thực tế -->
+    <div class="chart-container"><canvas id="tempHumChart"></canvas></div>
+    <div class="chart-container"><canvas id="waterLevelChart"></canvas></div>
+    <div class="chart-container"><canvas id="pressureAltitudeChart"></canvas></div>
+    <div class="chart-container"><canvas id="accelerationChart"></canvas></div>
+    <div class="chart-container"><canvas id="rainVibrationChart"></canvas></div>
+
+    <!-- Dự báo -->
+    <div class="chart-container"><canvas id="forecastChart"></canvas></div>
 
     <script>
+        // DỮ LIỆU THỰC TẾ
         fetch('/data')
             .then(response => response.json())
             .then(data => {
                 const labels = data.timestamps;
 
-                // Nhiệt độ và độ ẩm
                 new Chart(document.getElementById('tempHumChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Nhiệt độ (°C)',
-                                data: data.temperatures,
-                                borderColor: 'red',
-                                fill: false
-                            },
-                            {
-                                label: 'Độ ẩm (%)',
-                                data: data.humidities,
-                                borderColor: 'blue',
-                                fill: false
-                            }
+                            { label: 'Nhiệt độ (°C)', data: data.temperatures, borderColor: 'red', fill: false },
+                            { label: 'Độ ẩm (%)', data: data.humidities, borderColor: 'blue', fill: false }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Nhiệt độ và độ ẩm môi trường'
-                            }
-                        }
+                        plugins: { title: { display: true, text: 'Nhiệt độ và độ ẩm môi trường' } }
                     }
                 });
 
-                // Mực nước
                 new Chart(document.getElementById('waterLevelChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Mực nước (cm)',
-                                data: data.water_levels,
-                                borderColor: 'teal',
-                                fill: false
-                            }
+                            { label: 'Mực nước (cm)', data: data.water_levels, borderColor: 'teal', fill: false }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Theo dõi mực nước để phát hiện nguy cơ lũ'
-                            }
-                        }
+                        plugins: { title: { display: true, text: 'Theo dõi mực nước để phát hiện nguy cơ lũ' } }
                     }
                 });
 
-                // Áp suất và độ cao
                 new Chart(document.getElementById('pressureAltitudeChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Áp suất (hPa)',
-                                data: data.pressures,
-                                borderColor: 'orange',
-                                fill: false
-                            },
-                            {
-                                label: 'Độ cao (m)',
-                                data: data.altitudes,
-                                borderColor: 'green',
-                                fill: false
-                            }
+                            { label: 'Áp suất (hPa)', data: data.pressures, borderColor: 'orange', fill: false },
+                            { label: 'Độ cao (m)', data: data.altitudes, borderColor: 'green', fill: false }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Áp suất khí quyển và độ cao'
-                            }
-                        }
+                        plugins: { title: { display: true, text: 'Áp suất khí quyển và độ cao' } }
                     }
                 });
 
-                // Gia tốc (Gyroscope)
                 new Chart(document.getElementById('accelerationChart'), {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Gyro X',
-                                data: data.gyro_xs,
-                                borderColor: 'purple',
-                                fill: false
-                            },
-                            {
-                                label: 'Gyro Y',
-                                data: data.gyro_ys,
-                                borderColor: 'blue',
-                                fill: false
-                            },
-                            {
-                                label: 'Gyro Z',
-                                data: data.gyro_zs,
-                                borderColor: 'red',
-                                fill: false
-                            }
+                            { label: 'Gyro X', data: data.gyro_xs, borderColor: 'purple', fill: false },
+                            { label: 'Gyro Y', data: data.gyro_ys, borderColor: 'blue', fill: false },
+                            { label: 'Gyro Z', data: data.gyro_zs, borderColor: 'red', fill: false }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Gia tốc theo 3 trục (phát hiện rung chuyển đất đá)'
-                            }
-                        }
+                        plugins: { title: { display: true, text: 'Gia tốc theo 3 trục (phát hiện rung chuyển đất đá)' } }
                     }
                 });
 
-                // Mưa & Rung chuyển
                 new Chart(document.getElementById('rainVibrationChart'), {
                     type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: 'Mưa (1 = Có mưa)',
-                                data: data.rains,
-                                backgroundColor: 'skyblue'
-                            },
-                            {
-                                label: 'Rung chuyển (1 = Có rung)',
-                                data: data.vibrations,
-                                backgroundColor: 'salmon'
-                            }
+                            { label: 'Mưa (1 = Có mưa)', data: data.rains, backgroundColor: 'skyblue' },
+                            { label: 'Rung chuyển (1 = Có rung)', data: data.vibrations, backgroundColor: 'salmon' }
                         ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { title: { display: true, text: 'Trạng thái mưa và rung chuyển đất' } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+            });
+
+        // DỰ BÁO
+        fetch('/predict')
+            .then(response => response.json())
+            .then(predictData => {
+                const ctx = document.getElementById('forecastChart').getContext('2d');
+
+                const parameters = [
+                    { key: 'temperature', label: 'Nhiệt độ (°C)', color: 'red' },
+                    { key: 'humidity', label: 'Độ ẩm (%)', color: 'blue' },
+                    { key: 'water_level', label: 'Mực nước (cm)', color: 'teal' },
+                    { key: 'rain_level', label: 'Lượng mưa', color: 'navy' },
+                    { key: 'soil_moisture', label: 'Độ ẩm đất', color: 'brown' },
+                    { key: 'pressure', label: 'Áp suất (hPa)', color: 'orange' },
+                    { key: 'vibration', label: 'Rung chuyển', color: 'purple' }
+                ];
+
+                const datasets = [];
+                let forecastLabels = [];
+
+                parameters.forEach(param => {
+                    const info = predictData.prediction[param.key];
+                    if (info && info.last_values && info.predicted_next) {
+                        const values = info.last_values.concat(info.predicted_next);
+
+                        forecastLabels = Array.from({ length: values.length }, (_, i) =>
+                            i < info.last_values.length ? `Hiện tại ${i+1}` : `Dự báo ${i - info.last_values.length + 1}`
+                        );
+
+                        datasets.push({
+                            label: param.label,
+                            data: values,
+                            borderColor: param.color,
+                            fill: false,
+                            tension: 0.3
+                        });
+                    }
+                });
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: forecastLabels,
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Trạng thái mưa và rung chuyển đất'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
+                                text: 'Dự báo xu hướng các thông số môi trường (Holt-Winters)'
+                            },
+                            legend: {
+                                position: 'bottom'
                             }
                         }
                     }
