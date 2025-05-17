@@ -103,7 +103,6 @@ def predict_trend():
         df = df.sort_values('timestamp')
         result = {}
         stats = {}
-        alerts = []
 
         forecast_steps = 5
         parameters = ['temperature', 'humidity', 'water_level', 'rain_level',
@@ -157,8 +156,7 @@ def predict_trend():
             'prediction': result,
             'statistics': stats,
             'correlation_matrix': corr_matrix,
-            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S"),
-            'alerts': alerts
+            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S")
         })
 
     except Exception as e:
