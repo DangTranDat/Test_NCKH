@@ -147,50 +147,48 @@
 
 <script>
     function renderAlerts(alerts) {
-        const alertSection = document.getElementById('alertSection');
-        const alertList = document.getElementById('alertList');
-        alertList.innerHTML = '';
-    
-        if (!alerts || alerts.length === 0) {
-            alertSection.style.display = 'none';
-            return;
-        }
-    
-        // Lấy cảnh báo cuối cùng không rỗng
-        let lastAlert = null;
-        for (let i = alerts.length - 1; i >= 0; i--) {
-            if (alerts[i] && alerts[i].trim() !== '') {
-                lastAlert = alerts[i];
-                break;
-            }
-        }
-    
-        if (!lastAlert) {
-            alertSection.style.display = 'none';
-            return;
-        }
-    
-        alertSection.style.display = 'block';
-    
-        const div = document.createElement('div');
-        div.classList.add('alert-item', 'alert-warning');
-    
-        if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
-            div.classList.replace('alert-warning', 'alert-danger');
-        } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
-            div.classList.replace('alert-warning', 'alert-info');
-        }
-    
-        const iconSpan = document.createElement('span');
-        iconSpan.classList.add('alert-icon');
-        iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
-                                lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
-    
-        div.appendChild(iconSpan);
-        div.appendChild(document.createTextNode(lastAlert));
-        alertList.appendChild(div);
+    const alertSection = document.getElementById('alertSection');
+    const alertList = document.getElementById('alertList');
+    alertList.innerHTML = '';
+
+    // Kiểm tra mảng alerts có hợp lệ và có ít nhất 1 phần tử
+    if (!alerts || alerts.length === 0) {
+        alertSection.style.display = 'none';
+        return;
     }
 
+    // Lấy phần tử cuối cùng
+    const lastRawAlert = alerts[alerts.length - 1];
+    const lastAlert = lastRawAlert ? lastRawAlert.trim() : '';
+
+    // Nếu phần tử cuối là chuỗi rỗng hoặc chỉ khoảng trắng -> tắt cảnh báo
+    if (!lastAlert) {
+        alertSection.style.display = 'none';
+        return;
+    }
+
+    // Có cảnh báo, hiển thị
+    alertSection.style.display = 'block';
+
+    const div = document.createElement('div');
+    div.classList.add('alert-item', 'alert-warning');
+
+    // Xác định mức độ cảnh báo
+    if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
+        div.classList.replace('alert-warning', 'alert-danger');
+    } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
+        div.classList.replace('alert-warning', 'alert-info');
+    }
+
+    const iconSpan = document.createElement('span');
+    iconSpan.classList.add('alert-icon');
+    iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
+                            lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
+
+    div.appendChild(iconSpan);
+    div.appendChild(document.createTextNode(' ' + lastAlert));
+    alertList.appendChild(div);
+}
 
     async function loadData() {
     try {
