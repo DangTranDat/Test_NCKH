@@ -133,7 +133,6 @@ def predict_trend():
             }
         
         # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
-        alert.append(canhbao)
         """last = df.iloc[-1]
 
         if last['temperature'] < 35:
