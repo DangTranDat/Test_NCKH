@@ -19,20 +19,12 @@
             padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        h1, h2 {
+        h1 {
             text-align: center;
             color: #333;
         }
-        .chart-container {
+        .chart, .table-container {
             margin-top: 30px;
-        }
-        .chart-box {
-            margin-bottom: 50px;
-        }
-        .chart-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: bold;
         }
         table {
             width: 100%;
@@ -94,13 +86,16 @@
 <div id="container">
     <h1>Hệ thống Giám sát & Dự đoán Thiên tai</h1>
 
+    <!-- Cảnh báo -->
     <div id="alertSection">
         <h2>Cảnh báo</h2>
         <div id="alertList"></div>
     </div>
 
-    <!-- Biểu đồ phân tách -->
-    <div class="chart-container" id="chartContainer"></div>
+    <!-- Biểu đồ -->
+    <div class="chart">
+        <div id="multiLineChart" style="height: 500px;"></div>
+    </div>
 
     <!-- Bảng dữ liệu -->
     <div class="table-container">
@@ -125,11 +120,13 @@
         </table>
     </div>
 
+    <!-- Thống kê -->
     <div class="table-container" id="statisticsSection">
         <h2>Thống kê</h2>
         <div id="statisticsTable"></div>
     </div>
 
+    <!-- Ma trận tương quan -->
     <div class="table-container" id="correlationSection">
         <h2>Ma trận tương quan</h2>
         <div id="correlationMatrix"></div>
@@ -145,36 +142,47 @@
         const alertSection = document.getElementById('alertSection');
         const alertList = document.getElementById('alertList');
         alertList.innerHTML = '';
-
+    
         if (!alerts || alerts.length === 0) {
             alertSection.style.display = 'none';
             return;
         }
-
-        let lastAlert = alerts.reverse().find(a => a && a.trim() !== '');
+    
+        // Lấy cảnh báo cuối cùng không rỗng
+        let lastAlert = null;
+        for (let i = alerts.length - 1; i >= 0; i--) {
+            if (alerts[i] && alerts[i].trim() !== '') {
+                lastAlert = alerts[i];
+                break;
+            }
+        }
+    
         if (!lastAlert) {
             alertSection.style.display = 'none';
             return;
         }
-
+    
         alertSection.style.display = 'block';
+    
         const div = document.createElement('div');
         div.classList.add('alert-item', 'alert-warning');
-
+    
         if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
             div.classList.replace('alert-warning', 'alert-danger');
         } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
             div.classList.replace('alert-warning', 'alert-info');
         }
-
+    
         const iconSpan = document.createElement('span');
         iconSpan.classList.add('alert-icon');
         iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
                                 lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
+    
         div.appendChild(iconSpan);
         div.appendChild(document.createTextNode(lastAlert));
         alertList.appendChild(div);
     }
+
 
     async function loadData() {
         try {
@@ -185,10 +193,12 @@
 
             const data = await dataRes.json();
             const predict = await predictRes.json();
+
+            // ==== Hiển thị cảnh báo từ /data thay vì /predict ====
             const alerts = data.canhbao || [];
             renderAlerts(alerts);
 
-            // Bảng dữ liệu
+            // ==== Hiển thị bảng dữ liệu ====
             const tbody = document.querySelector('#dataTable tbody');
             tbody.innerHTML = '';
             for (let i = 0; i < data.timestamps.length; i++) {
@@ -213,184 +223,74 @@
                 tbody.appendChild(row);
             }
 
-            // Biểu đồ
-            // Biểu đồ - Nhóm dữ liệu lại
-            const chartContainer = document.getElementById('chartContainer');
-            chartContainer.innerHTML = '';
-
-            // Nhóm 1: Nhiệt độ & Độ ẩm
-            (function () {
-                const chartId = 'chart_temp_humidity';
-                const div = document.createElement('div');
-                div.className = 'chart-box';
-                div.innerHTML = `<div class="chart-title">Nhiệt độ & Độ ẩm</div><div id="${chartId}" style="height:400px;"></div>`;
-                chartContainer.appendChild(div);
-            
-                const traces = [
-                    {
-                        x: data.timestamps,
-                        y: data.temperatures,
-                        name: 'Nhiệt độ',
-                        mode: 'lines+markers',
-                        line: { color: 'red' }
-                    },
-                    {
-                        x: data.forecast_timestamps,
-                        y: data.temperatures_forecast,
-                        name: 'Nhiệt độ dự báo',
-                        mode: 'lines',
-                        line: { dash: 'dash', color: 'red' }
-                    },
-                    {
-                        x: data.timestamps,
-                        y: data.humidities,
-                        name: 'Độ ẩm',
-                        mode: 'lines+markers',
-                        line: { color: 'blue' }
-                    },
-                    {
-                        x: data.forecast_timestamps,
-                        y: data.humidities_forecast,
-                        name: 'Độ ẩm dự báo',
-                        mode: 'lines',
-                        line: { dash: 'dash', color: 'blue' }
-                    }
-                ];
-            
-                Plotly.newPlot(chartId, traces, {
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' },
-                    margin: { t: 20 }
-                });
-            })();
-
-
-            // Nhóm 2: Gyroscope
-            (function () {
-                const chartId = 'chart_gyro';
-                const div = document.createElement('div');
-                div.className = 'chart-box';
-                div.innerHTML = `<div class="chart-title">Gyroscope (X, Y, Z)</div><div id="${chartId}" style="height:400px;"></div>`;
-                chartContainer.appendChild(div);
-
-                const traces = [
-                    {
-                        x: data.timestamps,
-                        y: data.gyro_xs,
-                        name: 'Gyro X',
-                        mode: 'lines+markers',
-                        line: { color: 'pink' }
-                    },
-                    {
-                        x: data.timestamps,
-                        y: data.gyro_ys,
-                        name: 'Gyro Y',
-                        mode: 'lines+markers',
-                        line: { color: 'gray' }
-                    },
-                    {
-                        x: data.timestamps,
-                        y: data.gyro_zs,
-                        name: 'Gyro Z',
-                        mode: 'lines+markers',
-                        line: { color: 'cyan' }
-                    }
-                ];
-
-                Plotly.newPlot(chartId, traces, {
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' },
-                    margin: { t: 20 }
-                });
-            })();
-
-            // Nhóm 3: Mực nước, Lượng mưa, Độ ẩm đất
-            (function () {
-            const chartId = 'chart_water_rain_soil';
-            const div = document.createElement('div');
-            div.className = 'chart-box';
-            div.innerHTML = `<div class="chart-title">Mực nước, Lượng mưa, Độ ẩm đất</div><div id="${chartId}" style="height:400px;"></div>`;
-            chartContainer.appendChild(div);
-        
-            const traces = [
-                {
-                    x: data.timestamps,
-                    y: data.water_levels,
-                    name: 'Mực nước',
-                    mode: 'lines+markers',
-                    line: { color: 'green' }
-                },
-                {
-                    x: data.forecast_timestamps,
-                    y: data.water_levels_forecast,
-                    name: 'Mực nước dự báo',
-                    mode: 'lines',
-                    line: { dash: 'dash', color: 'green' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.rains_level,
-                    name: 'Lượng mưa',
-                    mode: 'lines+markers',
-                    line: { color: 'orange' }
-                },
-                {
-                    x: data.forecast_timestamps,
-                    y: data.rains_level_forecast,
-                    name: 'Lượng mưa dự báo',
-                    mode: 'lines',
-                    line: { dash: 'dash', color: 'orange' }
-                },
-                {
-                    x: data.timestamps,
-                    y: data.soil_moistures,
-                    name: 'Độ ẩm đất',
-                    mode: 'lines+markers',
-                    line: { color: 'purple' }
-                },
-                {
-                    x: data.forecast_timestamps,
-                    y: data.soil_moistures_forecast,
-                    name: 'Độ ẩm đất dự báo',
-                    mode: 'lines',
-                    line: { dash: 'dash', color: 'purple' }
-                }
-            ];
-        
-            Plotly.newPlot(chartId, traces, {
+            // ==== Biểu đồ ====
+            const layout = {
+                title: 'Dữ liệu thực tế và Dự đoán xu hướng',
                 xaxis: { title: 'Thời gian' },
-                yaxis: { title: 'Giá trị' },
-                margin: { t: 20 }
-            });
-        })();
+                yaxis: { title: 'Giá trị' }
+            };
 
+            const traces = [];
+            const colors = {
+                temperature: 'red',
+                humidity: 'blue',
+                water_level: 'green',
+                rain_level: 'orange',
+                soil_moisture: 'purple',
+                pressure: 'brown',
+                vibration: 'teal',
+                gyro_x: 'pink',
+                gyro_y: 'gray',
+                gyro_z: 'cyan'
+            };
 
-            // Biểu đồ riêng cho Rung động (True/False)
-            (function () {
-                const chartId = 'chart_vibration';
-                const div = document.createElement('div');
-                div.className = 'chart-box';
-                div.innerHTML = `<div class="chart-title">Rung động (Phát hiện hay không)</div><div id="${chartId}" style="height:300px;"></div>`;
-                chartContainer.appendChild(div);
+            function addActualTrace(field, label) {
+                if (data[`${field}s`] && data.timestamps) {
+                    traces.push({
+                        x: data.timestamps,
+                        y: data[`${field}s`],
+                        mode: 'lines+markers',
+                        name: `${label} (thực tế)`,
+                        line: { color: colors[field] || 'gray' }
+                    });
+                }
+            }
 
-                const binaryData = data.vibrations.map(v => v === true || v === 'True' ? 1 : 0);
+            function addPredictedTrace(field, label) {
+                const pred = predict.prediction[field];
+                if (pred && pred.predicted_next) {
+                    const futureX = pred.predicted_next.map((_, i) => `T+${i + 1}`);
+                    traces.push({
+                        x: futureX,
+                        y: pred.predicted_next,
+                        mode: 'lines',
+                        name: `${label} (dự đoán)`,
+                        line: { dash: 'dot', color: colors[field] || 'gray' }
+                    });
+                }
+            }
 
-                const trace = {
-                    x: data.timestamps,
-                    y: binaryData,
-                    type: 'bar',
-                    name: 'Rung động',
-                    marker: { color: 'teal' }
-                };
+            const fields = {
+                temperature: 'Nhiệt độ',
+                humidity: 'Độ ẩm',
+                water_level: 'Mực nước',
+                rain_level: 'Lượng mưa',
+                soil_moisture: 'Độ ẩm đất',
+                pressure: 'Áp suất',
+                vibration: 'Rung động',
+                gyro_x: 'Gyro X',
+                gyro_y: 'Gyro Y',
+                gyro_z: 'Gyro Z'
+            };
 
-                Plotly.newPlot(chartId, [trace], {
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Rung động (1: Có, 0: Không)', range: [-0.1, 1.1] },
-                    margin: { t: 20 }
-                });
-            })();
+            for (const field in fields) {
+                addActualTrace(field, fields[field]);
+                addPredictedTrace(field, fields[field]);
+            }
 
-            // Thống kê
+            Plotly.newPlot('multiLineChart', traces, layout);
+
+            // ==== Thống kê ====
             const stats = predict.statistics;
             let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
             for (const key in stats) {
@@ -405,7 +305,7 @@
             statsHTML += '</tbody></table>';
             document.getElementById('statisticsTable').innerHTML = statsHTML;
 
-            // Ma trận tương quan
+            // ==== Ma trận tương quan ====
             const corr = predict.correlation_matrix;
             const params = Object.keys(corr);
             let corrHTML = '<table><thead><tr><th></th>';
