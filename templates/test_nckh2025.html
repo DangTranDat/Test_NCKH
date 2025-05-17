@@ -228,10 +228,22 @@
 
             // ==== Biểu đồ ====
 // === Biểu đồ mới ===
-                        function drawCharts(data, predict) {
+            function drawCharts(data, predict) {
                 const timestamps = data.timestamps;
             
-                // 1. Nhiệt độ & Độ ẩm (thêm dự đoán)
+                // Hàm tạo mảng timestamps giả cho phần dự đoán (5 bước tiếp theo)
+                // Giả sử khoảng cách giữa các timestamp là đều nhau, lấy khoảng cách giữa 2 timestamp cuối cùng
+                let predictedTimestamps = [];
+                if (timestamps.length >= 2) {
+                    const lastTime = new Date(timestamps[timestamps.length - 1]).getTime();
+                    const secondLastTime = new Date(timestamps[timestamps.length - 2]).getTime();
+                    const interval = lastTime - secondLastTime;
+                    for (let i = 1; i <= predict.prediction.temperature.predicted_next.length; i++) {
+                        predictedTimestamps.push(new Date(lastTime + i * interval).toISOString());
+                    }
+                }
+            
+                // 1. Nhiệt độ & Độ ẩm
                 const tempHumidityTraces = [
                     {
                         x: timestamps,
@@ -241,40 +253,34 @@
                         line: { color: 'red' }
                     },
                     {
+                        x: predictedTimestamps,
+                        y: predict.prediction.temperature.predicted_next,
+                        name: "Dự đoán Nhiệt độ",
+                        mode: 'lines+markers',
+                        line: { dash: 'dot', color: 'red' }
+                    },
+                    {
                         x: timestamps,
                         y: data.humidities,
                         name: "Độ ẩm (%)",
                         mode: 'lines+markers',
                         line: { color: 'blue' }
+                    },
+                    {
+                        x: predictedTimestamps,
+                        y: predict.prediction.humidity.predicted_next,
+                        name: "Dự đoán Độ ẩm",
+                        mode: 'lines+markers',
+                        line: { dash: 'dot', color: 'blue' }
                     }
                 ];
-            
-                if (predict.timestamps_forecast && predict.temperature_forecast && predict.humidity_forecast) {
-                    tempHumidityTraces.push(
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.temperature_forecast,
-                            name: "Dự đoán Nhiệt độ",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'red' }
-                        },
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.humidity_forecast,
-                            name: "Dự đoán Độ ẩm",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'blue' }
-                        }
-                    );
-                }
-            
                 Plotly.newPlot('tempHumidityChart', tempHumidityTraces, {
                     title: "Nhiệt độ & Độ ẩm",
                     xaxis: { title: 'Thời gian' },
                     yaxis: { title: 'Giá trị' }
                 });
             
-                // 2. Gyroscope (thêm dự đoán)
+                // 2. Gyroscope (không có dự đoán trong dữ liệu bạn gửi, giữ nguyên)
                 const gyroTraces = [
                     {
                         x: timestamps,
@@ -298,40 +304,13 @@
                         line: { color: 'purple' }
                     }
                 ];
-            
-                if (predict.timestamps_forecast && predict.gyro_x_forecast && predict.gyro_y_forecast && predict.gyro_z_forecast) {
-                    gyroTraces.push(
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.gyro_x_forecast,
-                            name: "Dự đoán Gyro X",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'green' }
-                        },
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.gyro_y_forecast,
-                            name: "Dự đoán Gyro Y",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'orange' }
-                        },
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.gyro_z_forecast,
-                            name: "Dự đoán Gyro Z",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'purple' }
-                        }
-                    );
-                }
-            
                 Plotly.newPlot('gyroChart', gyroTraces, {
                     title: "Gyroscope (X/Y/Z)",
                     xaxis: { title: 'Thời gian' },
                     yaxis: { title: 'Giá trị' }
                 });
             
-                // 3. Mực nước, Lượng mưa, Độ ẩm đất (thêm dự đoán)
+                // 3. Mực nước, Lượng mưa, Độ ẩm đất
                 const waterRainSoilTraces = [
                     {
                         x: timestamps,
@@ -341,6 +320,13 @@
                         line: { color: 'blue' }
                     },
                     {
+                        x: predictedTimestamps,
+                        y: predict.prediction.water_level.predicted_next,
+                        name: "Dự đoán Mực nước",
+                        mode: 'lines+markers',
+                        line: { dash: 'dot', color: 'blue' }
+                    },
+                    {
                         x: timestamps,
                         y: data.rains_level,
                         name: "Lượng mưa",
@@ -348,55 +334,52 @@
                         line: { color: 'cyan' }
                     },
                     {
+                        x: predictedTimestamps,
+                        y: predict.prediction.rain_level.predicted_next,
+                        name: "Dự đoán Lượng mưa",
+                        mode: 'lines+markers',
+                        line: { dash: 'dot', color: 'cyan' }
+                    },
+                    {
                         x: timestamps,
                         y: data.soil_moistures,
                         name: "Độ ẩm đất",
                         mode: 'lines+markers',
                         line: { color: 'brown' }
+                    },
+                    {
+                        x: predictedTimestamps,
+                        y: predict.prediction.soil_moisture.predicted_next,
+                        name: "Dự đoán Độ ẩm đất",
+                        mode: 'lines+markers',
+                        line: { dash: 'dot', color: 'brown' }
                     }
                 ];
-            
-                if (predict.timestamps_forecast && predict.water_level_forecast && predict.rain_level_forecast && predict.soil_moisture_forecast) {
-                    waterRainSoilTraces.push(
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.water_level_forecast,
-                            name: "Dự đoán Mực nước",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'blue' }
-                        },
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.rain_level_forecast,
-                            name: "Dự đoán Lượng mưa",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'cyan' }
-                        },
-                        {
-                            x: predict.timestamps_forecast,
-                            y: predict.soil_moisture_forecast,
-                            name: "Dự đoán Độ ẩm đất",
-                            mode: 'lines',
-                            line: { dash: 'dash', color: 'brown' }
-                        }
-                    );
-                }
-            
                 Plotly.newPlot('waterRainSoilChart', waterRainSoilTraces, {
                     title: "Mực nước, Lượng mưa & Độ ẩm đất",
                     xaxis: { title: 'Thời gian' },
                     yaxis: { title: 'Giá trị' }
                 });
             
-                // 4. Rung động (không dự đoán)
-                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" ? 1 : 0);
-                Plotly.newPlot('vibrationChart', [{
-                    x: timestamps,
-                    y: vibrationBinary,
-                    type: 'bar',
-                    name: 'Rung động',
-                    marker: { color: 'crimson' }
-                }], {
+                // 4. Rung động True/False → dạng 1 = Có, 0 = Không
+                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" || val === 1 ? 1 : 0);
+                const vibrationPredictedBinary = predict.prediction.vibration.predicted_next.map(val => val >= 0.5 ? 1 : 0);
+                Plotly.newPlot('vibrationChart', [
+                    {
+                        x: timestamps,
+                        y: vibrationBinary,
+                        type: 'bar',
+                        name: 'Rung động',
+                        marker: { color: 'crimson' }
+                    },
+                    {
+                        x: predictedTimestamps,
+                        y: vibrationPredictedBinary,
+                        type: 'bar',
+                        name: 'Dự đoán Rung động',
+                        marker: { color: 'pink' }
+                    }
+                ], {
                     title: "Rung động (1 = Có, 0 = Không)",
                     xaxis: { title: 'Thời gian' },
                     yaxis: {
@@ -406,6 +389,7 @@
                     }
                 });
             }
+
 
 
             drawCharts(data, predict);
