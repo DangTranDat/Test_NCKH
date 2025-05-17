@@ -67,15 +67,15 @@ def upload_data():
         cursor.execute("""
             INSERT INTO nckh2025 (
                 timestamp, temperature, humidity, water_level, rain_level,
-                soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z,canhbao
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
         """, (
             timestamp, data.get('temperature'), data.get('humidity'),
             data.get('water_level'), data.get('rain_level'), data.get('soil_moisture'),
             data.get('pressure'), data.get('vibration'), data.get('gyro_x'),
-            data.get('gyro_y'), data.get('gyro_z')
+            data.get('gyro_y'), data.get('gyro_z'),data.get('Canh bao')
         ))
-        canhbao = data.get('Canh bao')
+        #canhbao = data.get('Canh bao')
         conn.commit()
         cursor.close()
         conn.close()
