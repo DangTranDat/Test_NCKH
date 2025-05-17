@@ -134,6 +134,11 @@
         <h2>Ma trận tương quan</h2>
         <div id="correlationMatrix"></div>
     </div>
+    <!-- Dự đoán xu hướng -->
+    <div class="table-container" id="predictionSection" style="margin-top:30px;">
+        <h2>Dự đoán xu hướng 5 bước tiếp theo</h2>
+        <div id="predictionContent"></div>
+    </div>
 </div>
 
 <div class="footer">
@@ -286,6 +291,141 @@
 
         // ==== TODO: Vẽ biểu đồ ====
         // Bạn có thể tiếp tục dùng dữ liệu 'data' và 'predict' để vẽ biểu đồ theo ý muốn.
+                function drawCharts(data, predict) {
+    const timestamps = data.timestamps;
+
+    // 1. Nhiệt độ & Độ ẩm
+    const tempTrace = {
+        x: timestamps,
+        y: data.temperatures,
+        name: 'Nhiệt độ (°C)',
+        mode: 'lines+markers',
+        line: {color: 'red'}
+    };
+    const tempPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.temperature.last_values, ...predict.prediction.temperature.predicted_next],
+        name: 'Dự đoán Nhiệt độ',
+        mode: 'lines+markers',
+        line: {color: 'red', dash: 'dash'}
+    };
+    const humidityTrace = {
+        x: timestamps,
+        y: data.humidities,
+        name: 'Độ ẩm (%)',
+        mode: 'lines+markers',
+        line: {color: 'blue'}
+    };
+    const humidityPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.humidity.last_values, ...predict.prediction.humidity.predicted_next],
+        name: 'Dự đoán Độ ẩm',
+        mode: 'lines+markers',
+        line: {color: 'blue', dash: 'dash'}
+    };
+
+    Plotly.newPlot('tempHumidityChart', 
+        [tempTrace, tempPredictTrace, humidityTrace, humidityPredictTrace],
+        {title: 'Nhiệt độ & Độ ẩm', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 2. Gyro X, Y, Z
+    const gyroXTrace = {
+        x: timestamps,
+        y: data.gyro_xs,
+        name: 'Gyro X',
+        mode: 'lines+markers',
+        line: {color: 'green'}
+    };
+    const gyroYTrace = {
+        x: timestamps,
+        y: data.gyro_ys,
+        name: 'Gyro Y',
+        mode: 'lines+markers',
+        line: {color: 'orange'}
+    };
+    const gyroZTrace = {
+        x: timestamps,
+        y: data.gyro_zs,
+        name: 'Gyro Z',
+        mode: 'lines+markers',
+        line: {color: 'purple'}
+    };
+
+    Plotly.newPlot('gyroChart',
+        [gyroXTrace, gyroYTrace, gyroZTrace],
+        {title: 'Gyroscope X/Y/Z', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 3. Mực nước, Lượng mưa, Độ ẩm đất
+    const waterLevelTrace = {
+        x: timestamps,
+        y: data.water_levels,
+        name: 'Mực nước',
+        mode: 'lines+markers',
+        line: {color: 'blue'}
+    };
+    const waterLevelPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.water_level.last_values, ...predict.prediction.water_level.predicted_next],
+        name: 'Dự đoán Mực nước',
+        mode: 'lines+markers',
+        line: {color: 'blue', dash: 'dash'}
+    };
+    const rainLevelTrace = {
+        x: timestamps,
+        y: data.rains_level,
+        name: 'Lượng mưa',
+        mode: 'lines+markers',
+        line: {color: 'gray'}
+    };
+    const rainLevelPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.rain_level.last_values, ...predict.prediction.rain_level.predicted_next],
+        name: 'Dự đoán Lượng mưa',
+        mode: 'lines+markers',
+        line: {color: 'gray', dash: 'dash'}
+    };
+    const soilMoistureTrace = {
+        x: timestamps,
+        y: data.soil_moistures,
+        name: 'Độ ẩm đất',
+        mode: 'lines+markers',
+        line: {color: 'brown'}
+    };
+    const soilMoisturePredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.soil_moisture.last_values, ...predict.prediction.soil_moisture.predicted_next],
+        name: 'Dự đoán Độ ẩm đất',
+        mode: 'lines+markers',
+        line: {color: 'brown', dash: 'dash'}
+    };
+
+    Plotly.newPlot('waterRainSoilChart',
+        [waterLevelTrace, waterLevelPredictTrace, rainLevelTrace, rainLevelPredictTrace, soilMoistureTrace, soilMoisturePredictTrace],
+        {title: 'Mực nước, Lượng mưa, Độ ẩm đất', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 4. Rung động (True/False)
+    // Hiển thị dạng bar với giá trị 0 hoặc 1
+    const vibrationTrace = {
+        x: timestamps,
+        y: data.vibrations,
+        name: 'Rung động thực tế',
+        type: 'bar',
+        marker: {color: 'purple'}
+    };
+    const vibrationPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.vibration.last_values, ...predict.prediction.vibration.predicted_next],
+        name: 'Dự đoán Rung động',
+        mode: 'lines+markers',
+        line: {color: 'purple', dash: 'dash'}
+    };
+
+    Plotly.newPlot('vibrationChart',
+        [vibrationTrace, vibrationPredictTrace],
+        {title: 'Rung động (True/False)', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị', range: [-0.2, 2]}});
+}
+        
+drawCharts(data, predict);
 
 
 
