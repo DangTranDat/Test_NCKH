@@ -227,21 +227,9 @@
             }
 
             // ==== Biểu đồ ====
-// === Biểu đồ mới ===
+            // === Biểu đồ mới ===
             function drawCharts(data, predict) {
                 const timestamps = data.timestamps;
-            
-                // Hàm tạo mảng timestamps giả cho phần dự đoán (5 bước tiếp theo)
-                // Giả sử khoảng cách giữa các timestamp là đều nhau, lấy khoảng cách giữa 2 timestamp cuối cùng
-                let predictedTimestamps = [];
-                if (timestamps.length >= 2) {
-                    const lastTime = new Date(timestamps[timestamps.length - 1]).getTime();
-                    const secondLastTime = new Date(timestamps[timestamps.length - 2]).getTime();
-                    const interval = lastTime - secondLastTime;
-                    for (let i = 1; i <= predict.prediction.temperature.predicted_next.length; i++) {
-                        predictedTimestamps.push(new Date(lastTime + i * interval).toISOString());
-                    }
-                }
             
                 // 1. Nhiệt độ & Độ ẩm
                 const tempHumidityTraces = [
@@ -253,25 +241,11 @@
                         line: { color: 'red' }
                     },
                     {
-                        x: predictedTimestamps,
-                        y: predict.prediction.temperature.predicted_next,
-                        name: "Dự đoán Nhiệt độ",
-                        mode: 'lines+markers',
-                        line: { dash: 'dot', color: 'red' }
-                    },
-                    {
                         x: timestamps,
                         y: data.humidities,
                         name: "Độ ẩm (%)",
                         mode: 'lines+markers',
                         line: { color: 'blue' }
-                    },
-                    {
-                        x: predictedTimestamps,
-                        y: predict.prediction.humidity.predicted_next,
-                        name: "Dự đoán Độ ẩm",
-                        mode: 'lines+markers',
-                        line: { dash: 'dot', color: 'blue' }
                     }
                 ];
                 Plotly.newPlot('tempHumidityChart', tempHumidityTraces, {
@@ -280,7 +254,7 @@
                     yaxis: { title: 'Giá trị' }
                 });
             
-                // 2. Gyroscope (không có dự đoán trong dữ liệu bạn gửi, giữ nguyên)
+                // 2. Gyroscope
                 const gyroTraces = [
                     {
                         x: timestamps,
@@ -320,13 +294,6 @@
                         line: { color: 'blue' }
                     },
                     {
-                        x: predictedTimestamps,
-                        y: predict.prediction.water_level.predicted_next,
-                        name: "Dự đoán Mực nước",
-                        mode: 'lines+markers',
-                        line: { dash: 'dot', color: 'blue' }
-                    },
-                    {
                         x: timestamps,
                         y: data.rains_level,
                         name: "Lượng mưa",
@@ -334,25 +301,11 @@
                         line: { color: 'cyan' }
                     },
                     {
-                        x: predictedTimestamps,
-                        y: predict.prediction.rain_level.predicted_next,
-                        name: "Dự đoán Lượng mưa",
-                        mode: 'lines+markers',
-                        line: { dash: 'dot', color: 'cyan' }
-                    },
-                    {
                         x: timestamps,
                         y: data.soil_moistures,
                         name: "Độ ẩm đất",
                         mode: 'lines+markers',
                         line: { color: 'brown' }
-                    },
-                    {
-                        x: predictedTimestamps,
-                        y: predict.prediction.soil_moisture.predicted_next,
-                        name: "Dự đoán Độ ẩm đất",
-                        mode: 'lines+markers',
-                        line: { dash: 'dot', color: 'brown' }
                     }
                 ];
                 Plotly.newPlot('waterRainSoilChart', waterRainSoilTraces, {
@@ -362,24 +315,14 @@
                 });
             
                 // 4. Rung động True/False → dạng 1 = Có, 0 = Không
-                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" || val === 1 ? 1 : 0);
-                const vibrationPredictedBinary = predict.prediction.vibration.predicted_next.map(val => val >= 0.5 ? 1 : 0);
-                Plotly.newPlot('vibrationChart', [
-                    {
-                        x: timestamps,
-                        y: vibrationBinary,
-                        type: 'bar',
-                        name: 'Rung động',
-                        marker: { color: 'crimson' }
-                    },
-                    {
-                        x: predictedTimestamps,
-                        y: vibrationPredictedBinary,
-                        type: 'bar',
-                        name: 'Dự đoán Rung động',
-                        marker: { color: 'pink' }
-                    }
-                ], {
+                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" ? 1 : 0);
+                Plotly.newPlot('vibrationChart', [{
+                    x: timestamps,
+                    y: vibrationBinary,
+                    type: 'bar',
+                    name: 'Rung động',
+                    marker: { color: 'crimson' }
+                }], {
                     title: "Rung động (1 = Có, 0 = Không)",
                     xaxis: { title: 'Thời gian' },
                     yaxis: {
@@ -389,8 +332,6 @@
                     }
                 });
             }
-
-
 
             drawCharts(data, predict);
             // ==== Thống kê ====
@@ -434,3 +375,7 @@
 </script>
 </body>
 </html>
+
+
+
+
