@@ -142,40 +142,47 @@
         const alertSection = document.getElementById('alertSection');
         const alertList = document.getElementById('alertList');
         alertList.innerHTML = '';
-
-        if (!alerts || alerts.length === 0 || alerts.every(a => !a || a.trim() === '')) {
+    
+        if (!alerts || alerts.length === 0) {
             alertSection.style.display = 'none';
             return;
         }
-
-        alertSection.style.display = 'block';
-
-        alerts.forEach(alert => {
-            if (!alert || alert.trim() === '') return;
-
-            let type = 'warning';
-            let message = alert;
-
-            const div = document.createElement('div');
-            div.classList.add('alert-item', 'alert-warning');
-
-            if (message.includes("NGUY CO") || message.includes("LU LUT") || message.includes("SAT LO")) {
-                div.classList.replace('alert-warning', 'alert-danger');
-                type = 'danger';
-            } else if (message.includes("MUA") || message.includes("DO AM")) {
-                div.classList.replace('alert-warning', 'alert-info');
-                type = 'info';
+    
+        // Lấy cảnh báo cuối cùng không rỗng
+        let lastAlert = null;
+        for (let i = alerts.length - 1; i >= 0; i--) {
+            if (alerts[i] && alerts[i].trim() !== '') {
+                lastAlert = alerts[i];
+                break;
             }
-
-            const iconSpan = document.createElement('span');
-            iconSpan.classList.add('alert-icon');
-            iconSpan.textContent = type === 'danger' ? '⚠️' : (type === 'info' ? '🔔' : '⚠️');
-
-            div.appendChild(iconSpan);
-            div.appendChild(document.createTextNode(message));
-            alertList.appendChild(div);
-        });
+        }
+    
+        if (!lastAlert) {
+            alertSection.style.display = 'none';
+            return;
+        }
+    
+        alertSection.style.display = 'block';
+    
+        const div = document.createElement('div');
+        div.classList.add('alert-item', 'alert-warning');
+    
+        if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
+            div.classList.replace('alert-warning', 'alert-danger');
+        } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
+            div.classList.replace('alert-warning', 'alert-info');
+        }
+    
+        const iconSpan = document.createElement('span');
+        iconSpan.classList.add('alert-icon');
+        iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
+                                lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
+    
+        div.appendChild(iconSpan);
+        div.appendChild(document.createTextNode(lastAlert));
+        alertList.appendChild(div);
     }
+
 
     async function loadData() {
         try {
