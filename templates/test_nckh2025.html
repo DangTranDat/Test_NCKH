@@ -188,187 +188,246 @@
 
 
     async function loadData() {
-        try {
-            const [dataRes, predictRes] = await Promise.all([
-                fetch('/data'),
-                fetch('/predict')
-            ]);
+    try {
+        const [dataRes, predictRes] = await Promise.all([
+            fetch('/data'),
+            fetch('/predict')
+        ]);
 
-            const data = await dataRes.json();
-            const predict = await predictRes.json();
+        const data = await dataRes.json();
+        const predict = await predictRes.json();
 
-            // ==== Hiển thị cảnh báo từ /data thay vì /predict ====
-            const alerts = data.canhbao || [];
-            renderAlerts(alerts);
+        // ==== Hiển thị cảnh báo từ /data ==== 
+        const alerts = data.canhbao || [];
+        renderAlerts(alerts);
 
-            // ==== Hiển thị bảng dữ liệu ====
-            const tbody = document.querySelector('#dataTable tbody');
-            tbody.innerHTML = '';
-            for (let i = 0; i < data.timestamps.length; i++) {
-                const row = document.createElement('tr');
-                [
-                    data.timestamps[i],
-                    data.temperatures[i],
-                    data.humidities[i],
-                    data.water_levels[i],
-                    data.rains_level[i],
-                    data.soil_moistures[i],
-                    data.pressures[i],
-                    data.vibrations[i],
-                    data.gyro_xs[i],
-                    data.gyro_ys[i],
-                    data.gyro_zs[i]
-                ].forEach(value => {
-                    const cell = document.createElement('td');
-                    cell.innerText = value;
-                    row.appendChild(cell);
-                });
-                tbody.appendChild(row);
-            }
+        // ==== Hiển thị bảng dữ liệu gần nhất ====
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '';
+        for (let i = 0; i < data.timestamps.length; i++) {
+            const row = document.createElement('tr');
+            [
+                data.timestamps[i],
+                data.temperatures[i],
+                data.humidities[i],
+                data.water_levels[i],
+                data.rains_level[i],
+                data.soil_moistures[i],
+                data.pressures[i],
+                data.vibrations[i],
+                data.gyro_xs[i],
+                data.gyro_ys[i],
+                data.gyro_zs[i]
+            ].forEach(value => {
+                const cell = document.createElement('td');
+                cell.innerText = value;
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        }
 
-            // ==== Biểu đồ ====
-            // === Biểu đồ mới ===
-            function drawCharts(data, predict) {
-                const timestamps = data.timestamps;
-            
-                // 1. Nhiệt độ & Độ ẩm
-                const tempHumidityTraces = [
-                    {
-                        x: timestamps,
-                        y: data.temperatures,
-                        name: "Nhiệt độ (°C)",
-                        mode: 'lines+markers',
-                        line: { color: 'red' }
-                    },
-                    {
-                        x: timestamps,
-                        y: data.humidities,
-                        name: "Độ ẩm (%)",
-                        mode: 'lines+markers',
-                        line: { color: 'blue' }
-                    }
-                ];
-                Plotly.newPlot('tempHumidityChart', tempHumidityTraces, {
-                    title: "Nhiệt độ & Độ ẩm",
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' }
-                });
-            
-                // 2. Gyroscope
-                const gyroTraces = [
-                    {
-                        x: timestamps,
-                        y: data.gyro_xs,
-                        name: "Gyro X",
-                        mode: 'lines+markers',
-                        line: { color: 'green' }
-                    },
-                    {
-                        x: timestamps,
-                        y: data.gyro_ys,
-                        name: "Gyro Y",
-                        mode: 'lines+markers',
-                        line: { color: 'orange' }
-                    },
-                    {
-                        x: timestamps,
-                        y: data.gyro_zs,
-                        name: "Gyro Z",
-                        mode: 'lines+markers',
-                        line: { color: 'purple' }
-                    }
-                ];
-                Plotly.newPlot('gyroChart', gyroTraces, {
-                    title: "Gyroscope (X/Y/Z)",
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' }
-                });
-            
-                // 3. Mực nước, Lượng mưa, Độ ẩm đất
-                const waterRainSoilTraces = [
-                    {
-                        x: timestamps,
-                        y: data.water_levels,
-                        name: "Mực nước",
-                        mode: 'lines+markers',
-                        line: { color: 'blue' }
-                    },
-                    {
-                        x: timestamps,
-                        y: data.rains_level,
-                        name: "Lượng mưa",
-                        mode: 'lines+markers',
-                        line: { color: 'cyan' }
-                    },
-                    {
-                        x: timestamps,
-                        y: data.soil_moistures,
-                        name: "Độ ẩm đất",
-                        mode: 'lines+markers',
-                        line: { color: 'brown' }
-                    }
-                ];
-                Plotly.newPlot('waterRainSoilChart', waterRainSoilTraces, {
-                    title: "Mực nước, Lượng mưa & Độ ẩm đất",
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' }
-                });
-            
-                // 4. Rung động True/False → dạng 1 = Có, 0 = Không
-                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" ? 1 : 0);
-                Plotly.newPlot('vibrationChart', [{
-                    x: timestamps,
-                    y: vibrationBinary,
-                    type: 'bar',
-                    name: 'Rung động',
-                    marker: { color: 'crimson' }
-                }], {
-                    title: "Rung động (1 = Có, 0 = Không)",
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: {
-                        title: 'Rung động',
-                        tickvals: [0, 1],
-                        ticktext: ['Không', 'Có']
-                    }
-                });
-            }
-
-            drawCharts(data, predict);
-            // ==== Thống kê ====
-            const stats = predict.statistics;
-            let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
-            for (const key in stats) {
-                statsHTML += `<tr>
-                    <td>${key}</td>
-                    <td>${stats[key].mean}</td>
-                    <td>${stats[key].std}</td>
-                    <td>${stats[key].min}</td>
-                    <td>${stats[key].max}</td>
+        // ==== Hiển thị Thống kê ====
+        const statsDiv = document.getElementById('statisticsTable');
+        const stats = predict.statistics;
+        if (stats) {
+            let html = '<table><thead><tr><th>Tham số</th><th>Giá trị trung bình</th><th>Độ lệch chuẩn</th><th>Giá trị nhỏ nhất</th><th>Giá trị lớn nhất</th></tr></thead><tbody>';
+            for (const param in stats) {
+                html += `<tr>
+                    <td>${param}</td>
+                    <td>${stats[param].mean}</td>
+                    <td>${stats[param].std}</td>
+                    <td>${stats[param].min}</td>
+                    <td>${stats[param].max}</td>
                 </tr>`;
             }
-            statsHTML += '</tbody></table>';
-            document.getElementById('statisticsTable').innerHTML = statsHTML;
-
-            // ==== Ma trận tương quan ====
-            const corr = predict.correlation_matrix;
-            const params = Object.keys(corr);
-            let corrHTML = '<table><thead><tr><th></th>';
-            params.forEach(p => corrHTML += `<th>${p}</th>`);
-            corrHTML += '</tr></thead><tbody>';
-            params.forEach(row => {
-                corrHTML += `<tr><td>${row}</td>`;
-                params.forEach(col => {
-                    corrHTML += `<td>${corr[row][col]}</td>`;
-                });
-                corrHTML += '</tr>';
-            });
-            corrHTML += '</tbody></table>';
-            document.getElementById('correlationMatrix').innerHTML = corrHTML;
-
-        } catch (err) {
-            console.error("Lỗi khi tải dữ liệu:", err);
+            html += '</tbody></table>';
+            statsDiv.innerHTML = html;
         }
+
+        // ==== Hiển thị Ma trận tương quan ====
+        const corrDiv = document.getElementById('correlationMatrix');
+        const corr = predict.correlation_matrix;
+        if (corr) {
+            let html = '<table><thead><tr><th></th>';
+            const keys = Object.keys(corr);
+            keys.forEach(k => { html += `<th>${k}</th>` });
+            html += '</tr></thead><tbody>';
+
+            keys.forEach(rowKey => {
+                html += `<tr><th>${rowKey}</th>`;
+                keys.forEach(colKey => {
+                    html += `<td>${corr[rowKey][colKey].toFixed(2)}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            corrDiv.innerHTML = html;
+        }
+
+        // ==== Hiển thị Dự đoán xu hướng ====
+        const predictionDiv = document.getElementById('predictionContent');
+        const predictions = predict.prediction;
+        if (predictions) {
+            let html = '';
+            for (const param in predictions) {
+                const pred = predictions[param];
+                if (pred.error) {
+                    html += `<p><b>${param}:</b> ${pred.error}</p>`;
+                    continue;
+                }
+                html += `<div style="margin-bottom:20px;">
+                    <h3>${param}</h3>
+                    <p><b>5 giá trị cuối cùng:</b> ${pred.last_values.map(v => v.toFixed ? v.toFixed(2) : v).join(', ')}</p>
+                    <p><b>Dự đoán 5 bước tiếp theo:</b> ${pred.predicted_next.map(v => v.toFixed ? v.toFixed(2) : v).join(', ')}</p>
+                </div>`;
+            }
+            predictionDiv.innerHTML = html;
+        }
+
+        // ==== TODO: Vẽ biểu đồ ====
+        // Bạn có thể tiếp tục dùng dữ liệu 'data' và 'predict' để vẽ biểu đồ theo ý muốn.
+        function drawCharts(data, predict) {
+    const timestamps = data.timestamps;
+
+    // 1. Nhiệt độ & Độ ẩm
+    const tempTrace = {
+        x: timestamps,
+        y: data.temperatures,
+        name: 'Nhiệt độ (°C)',
+        mode: 'lines+markers',
+        line: {color: 'red'}
+    };
+    const tempPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.temperature.last_values, ...predict.prediction.temperature.predicted_next],
+        name: 'Dự đoán Nhiệt độ',
+        mode: 'lines+markers',
+        line: {color: 'red', dash: 'dash'}
+    };
+    const humidityTrace = {
+        x: timestamps,
+        y: data.humidities,
+        name: 'Độ ẩm (%)',
+        mode: 'lines+markers',
+        line: {color: 'blue'}
+    };
+    const humidityPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.humidity.last_values, ...predict.prediction.humidity.predicted_next],
+        name: 'Dự đoán Độ ẩm',
+        mode: 'lines+markers',
+        line: {color: 'blue', dash: 'dash'}
+    };
+
+    Plotly.newPlot('tempHumidityChart', 
+        [tempTrace, tempPredictTrace, humidityTrace, humidityPredictTrace],
+        {title: 'Nhiệt độ & Độ ẩm', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 2. Gyro X, Y, Z
+    const gyroXTrace = {
+        x: timestamps,
+        y: data.gyro_xs,
+        name: 'Gyro X',
+        mode: 'lines+markers',
+        line: {color: 'green'}
+    };
+    const gyroYTrace = {
+        x: timestamps,
+        y: data.gyro_ys,
+        name: 'Gyro Y',
+        mode: 'lines+markers',
+        line: {color: 'orange'}
+    };
+    const gyroZTrace = {
+        x: timestamps,
+        y: data.gyro_zs,
+        name: 'Gyro Z',
+        mode: 'lines+markers',
+        line: {color: 'purple'}
+    };
+
+    Plotly.newPlot('gyroChart',
+        [gyroXTrace, gyroYTrace, gyroZTrace],
+        {title: 'Gyroscope X/Y/Z', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 3. Mực nước, Lượng mưa, Độ ẩm đất
+    const waterLevelTrace = {
+        x: timestamps,
+        y: data.water_levels,
+        name: 'Mực nước',
+        mode: 'lines+markers',
+        line: {color: 'blue'}
+    };
+    const waterLevelPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.water_level.last_values, ...predict.prediction.water_level.predicted_next],
+        name: 'Dự đoán Mực nước',
+        mode: 'lines+markers',
+        line: {color: 'blue', dash: 'dash'}
+    };
+    const rainLevelTrace = {
+        x: timestamps,
+        y: data.rains_level,
+        name: 'Lượng mưa',
+        mode: 'lines+markers',
+        line: {color: 'gray'}
+    };
+    const rainLevelPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.rain_level.last_values, ...predict.prediction.rain_level.predicted_next],
+        name: 'Dự đoán Lượng mưa',
+        mode: 'lines+markers',
+        line: {color: 'gray', dash: 'dash'}
+    };
+    const soilMoistureTrace = {
+        x: timestamps,
+        y: data.soil_moistures,
+        name: 'Độ ẩm đất',
+        mode: 'lines+markers',
+        line: {color: 'brown'}
+    };
+    const soilMoisturePredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.soil_moisture.last_values, ...predict.prediction.soil_moisture.predicted_next],
+        name: 'Dự đoán Độ ẩm đất',
+        mode: 'lines+markers',
+        line: {color: 'brown', dash: 'dash'}
+    };
+
+    Plotly.newPlot('waterRainSoilChart',
+        [waterLevelTrace, waterLevelPredictTrace, rainLevelTrace, rainLevelPredictTrace, soilMoistureTrace, soilMoisturePredictTrace],
+        {title: 'Mực nước, Lượng mưa, Độ ẩm đất', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị'}});
+
+    // 4. Rung động (True/False)
+    // Hiển thị dạng bar với giá trị 0 hoặc 1
+    const vibrationTrace = {
+        x: timestamps,
+        y: data.vibrations,
+        name: 'Rung động thực tế',
+        type: 'bar',
+        marker: {color: 'purple'}
+    };
+    const vibrationPredictTrace = {
+        x: [...timestamps.slice(-5), ...Array.from({length: 5}, (_, i) => `Dự đoán +${i+1}`)],
+        y: [...predict.prediction.vibration.last_values, ...predict.prediction.vibration.predicted_next],
+        name: 'Dự đoán Rung động',
+        mode: 'lines+markers',
+        line: {color: 'purple', dash: 'dash'}
+    };
+
+    Plotly.newPlot('vibrationChart',
+        [vibrationTrace, vibrationPredictTrace],
+        {title: 'Rung động (True/False)', xaxis: {title: 'Thời gian'}, yaxis: {title: 'Giá trị', range: [-0.2, 2]}});
+}
+        drawCharts(data, predict);
+
+
+    } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error);
     }
+}
+
+
 
     loadData();
     setInterval(loadData, 10000);
