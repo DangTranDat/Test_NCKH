@@ -75,6 +75,7 @@ def upload_data():
             data.get('pressure'), data.get('vibration'), data.get('gyro_x'),
             data.get('gyro_y'), data.get('gyro_z')
         ))
+        canhbao = data.get('Canh bao')
         conn.commit()
         cursor.close()
         conn.close()
@@ -132,9 +133,7 @@ def predict_trend():
             }
         
         # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
-        data = request.json
-        canhbao = data.get('Canh bao')
-        alerts.append(canhbao)
+        alert.append(canhbao)
         """last = df.iloc[-1]
 
         if last['temperature'] < 35:
