@@ -225,7 +225,7 @@
                 div.className = 'chart-box';
                 div.innerHTML = `<div class="chart-title">Nhiệt độ & Độ ẩm</div><div id="${chartId}" style="height:400px;"></div>`;
                 chartContainer.appendChild(div);
-
+            
                 const traces = [
                     {
                         x: data.timestamps,
@@ -235,20 +235,35 @@
                         line: { color: 'red' }
                     },
                     {
+                        x: data.forecast_timestamps,
+                        y: data.temperatures_forecast,
+                        name: 'Nhiệt độ dự báo',
+                        mode: 'lines',
+                        line: { dash: 'dash', color: 'red' }
+                    },
+                    {
                         x: data.timestamps,
                         y: data.humidities,
                         name: 'Độ ẩm',
                         mode: 'lines+markers',
                         line: { color: 'blue' }
+                    },
+                    {
+                        x: data.forecast_timestamps,
+                        y: data.humidities_forecast,
+                        name: 'Độ ẩm dự báo',
+                        mode: 'lines',
+                        line: { dash: 'dash', color: 'blue' }
                     }
                 ];
-
+            
                 Plotly.newPlot(chartId, traces, {
                     xaxis: { title: 'Thời gian' },
                     yaxis: { title: 'Giá trị' },
                     margin: { t: 20 }
                 });
             })();
+
 
             // Nhóm 2: Gyroscope
             (function () {
@@ -291,42 +306,64 @@
 
             // Nhóm 3: Mực nước, Lượng mưa, Độ ẩm đất
             (function () {
-                const chartId = 'chart_water_rain_soil';
-                const div = document.createElement('div');
-                div.className = 'chart-box';
-                div.innerHTML = `<div class="chart-title">Mực nước, Lượng mưa, Độ ẩm đất</div><div id="${chartId}" style="height:400px;"></div>`;
-                chartContainer.appendChild(div);
+            const chartId = 'chart_water_rain_soil';
+            const div = document.createElement('div');
+            div.className = 'chart-box';
+            div.innerHTML = `<div class="chart-title">Mực nước, Lượng mưa, Độ ẩm đất</div><div id="${chartId}" style="height:400px;"></div>`;
+            chartContainer.appendChild(div);
+        
+            const traces = [
+                {
+                    x: data.timestamps,
+                    y: data.water_levels,
+                    name: 'Mực nước',
+                    mode: 'lines+markers',
+                    line: { color: 'green' }
+                },
+                {
+                    x: data.forecast_timestamps,
+                    y: data.water_levels_forecast,
+                    name: 'Mực nước dự báo',
+                    mode: 'lines',
+                    line: { dash: 'dash', color: 'green' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.rains_level,
+                    name: 'Lượng mưa',
+                    mode: 'lines+markers',
+                    line: { color: 'orange' }
+                },
+                {
+                    x: data.forecast_timestamps,
+                    y: data.rains_level_forecast,
+                    name: 'Lượng mưa dự báo',
+                    mode: 'lines',
+                    line: { dash: 'dash', color: 'orange' }
+                },
+                {
+                    x: data.timestamps,
+                    y: data.soil_moistures,
+                    name: 'Độ ẩm đất',
+                    mode: 'lines+markers',
+                    line: { color: 'purple' }
+                },
+                {
+                    x: data.forecast_timestamps,
+                    y: data.soil_moistures_forecast,
+                    name: 'Độ ẩm đất dự báo',
+                    mode: 'lines',
+                    line: { dash: 'dash', color: 'purple' }
+                }
+            ];
+        
+            Plotly.newPlot(chartId, traces, {
+                xaxis: { title: 'Thời gian' },
+                yaxis: { title: 'Giá trị' },
+                margin: { t: 20 }
+            });
+        })();
 
-                const traces = [
-                    {
-                        x: data.timestamps,
-                        y: data.water_levels,
-                        name: 'Mực nước',
-                        mode: 'lines+markers',
-                        line: { color: 'green' }
-                    },
-                    {
-                        x: data.timestamps,
-                        y: data.rains_level,
-                        name: 'Lượng mưa',
-                        mode: 'lines+markers',
-                        line: { color: 'orange' }
-                    },
-                    {
-                        x: data.timestamps,
-                        y: data.soil_moistures,
-                        name: 'Độ ẩm đất',
-                        mode: 'lines+markers',
-                        line: { color: 'purple' }
-                    }
-                ];
-
-                Plotly.newPlot(chartId, traces, {
-                    xaxis: { title: 'Thời gian' },
-                    yaxis: { title: 'Giá trị' },
-                    margin: { t: 20 }
-                });
-            })();
 
             // Biểu đồ riêng cho Rung động (True/False)
             (function () {
