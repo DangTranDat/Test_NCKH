@@ -94,7 +94,10 @@
 
     <!-- Biểu đồ -->
     <div class="chart">
-        <div id="multiLineChart" style="height: 500px;"></div>
+        <div id="tempHumidityChart" style="height: 400px;"></div>
+        <div id="gyroChart" style="height: 400px; margin-top: 30px;"></div>
+        <div id="waterRainSoilChart" style="height: 400px; margin-top: 30px;"></div>
+        <div id="vibrationChart" style="height: 200px; margin-top: 30px;"></div>    
     </div>
 
     <!-- Bảng dữ liệu -->
@@ -224,72 +227,113 @@
             }
 
             // ==== Biểu đồ ====
-            const layout = {
-                title: 'Dữ liệu thực tế và Dự đoán xu hướng',
-                xaxis: { title: 'Thời gian' },
-                yaxis: { title: 'Giá trị' }
-            };
-
-            const traces = [];
-            const colors = {
-                temperature: 'red',
-                humidity: 'blue',
-                water_level: 'green',
-                rain_level: 'orange',
-                soil_moisture: 'purple',
-                pressure: 'brown',
-                vibration: 'teal',
-                gyro_x: 'pink',
-                gyro_y: 'gray',
-                gyro_z: 'cyan'
-            };
-
-            function addActualTrace(field, label) {
-                if (data[`${field}s`] && data.timestamps) {
-                    traces.push({
-                        x: data.timestamps,
-                        y: data[`${field}s`],
+// === Biểu đồ mới ===
+            function drawCharts(data, predict) {
+                const timestamps = data.timestamps;
+            
+                // 1. Nhiệt độ & Độ ẩm
+                const tempHumidityTraces = [
+                    {
+                        x: timestamps,
+                        y: data.temperatures,
+                        name: "Nhiệt độ (°C)",
                         mode: 'lines+markers',
-                        name: `${label} (thực tế)`,
-                        line: { color: colors[field] || 'gray' }
-                    });
-                }
+                        line: { color: 'red' }
+                    },
+                    {
+                        x: timestamps,
+                        y: data.humidities,
+                        name: "Độ ẩm (%)",
+                        mode: 'lines+markers',
+                        line: { color: 'blue' }
+                    }
+                ];
+                Plotly.newPlot('tempHumidityChart', tempHumidityTraces, {
+                    title: "Nhiệt độ & Độ ẩm",
+                    xaxis: { title: 'Thời gian' },
+                    yaxis: { title: 'Giá trị' }
+                });
+            
+                // 2. Gyroscope
+                const gyroTraces = [
+                    {
+                        x: timestamps,
+                        y: data.gyro_xs,
+                        name: "Gyro X",
+                        mode: 'lines+markers',
+                        line: { color: 'green' }
+                    },
+                    {
+                        x: timestamps,
+                        y: data.gyro_ys,
+                        name: "Gyro Y",
+                        mode: 'lines+markers',
+                        line: { color: 'orange' }
+                    },
+                    {
+                        x: timestamps,
+                        y: data.gyro_zs,
+                        name: "Gyro Z",
+                        mode: 'lines+markers',
+                        line: { color: 'purple' }
+                    }
+                ];
+                Plotly.newPlot('gyroChart', gyroTraces, {
+                    title: "Gyroscope (X/Y/Z)",
+                    xaxis: { title: 'Thời gian' },
+                    yaxis: { title: 'Giá trị' }
+                });
+            
+                // 3. Mực nước, Lượng mưa, Độ ẩm đất
+                const waterRainSoilTraces = [
+                    {
+                        x: timestamps,
+                        y: data.water_levels,
+                        name: "Mực nước",
+                        mode: 'lines+markers',
+                        line: { color: 'blue' }
+                    },
+                    {
+                        x: timestamps,
+                        y: data.rains_level,
+                        name: "Lượng mưa",
+                        mode: 'lines+markers',
+                        line: { color: 'cyan' }
+                    },
+                    {
+                        x: timestamps,
+                        y: data.soil_moistures,
+                        name: "Độ ẩm đất",
+                        mode: 'lines+markers',
+                        line: { color: 'brown' }
+                    }
+                ];
+                Plotly.newPlot('waterRainSoilChart', waterRainSoilTraces, {
+                    title: "Mực nước, Lượng mưa & Độ ẩm đất",
+                    xaxis: { title: 'Thời gian' },
+                    yaxis: { title: 'Giá trị' }
+                });
+            
+                // 4. Rung động True/False → dạng 1 = Có, 0 = Không
+                const vibrationBinary = data.vibrations.map(val => val === true || val === "True" ? 1 : 0);
+                Plotly.newPlot('vibrationChart', [{
+                    x: timestamps,
+                    y: vibrationBinary,
+                    type: 'bar',
+                    name: 'Rung động',
+                    marker: { color: 'crimson' }
+                }], {
+                    title: "Rung động (1 = Có, 0 = Không)",
+                    xaxis: { title: 'Thời gian' },
+                    yaxis: {
+                        title: 'Rung động',
+                        tickvals: [0, 1],
+                        ticktext: ['Không', 'Có']
+                    }
+                });
             }
 
-            function addPredictedTrace(field, label) {
-                const pred = predict.prediction[field];
-                if (pred && pred.predicted_next) {
-                    const futureX = pred.predicted_next.map((_, i) => `T+${i + 1}`);
-                    traces.push({
-                        x: futureX,
-                        y: pred.predicted_next,
-                        mode: 'lines',
-                        name: `${label} (dự đoán)`,
-                        line: { dash: 'dot', color: colors[field] || 'gray' }
-                    });
-                }
-            }
-
-            const fields = {
-                temperature: 'Nhiệt độ',
-                humidity: 'Độ ẩm',
-                water_level: 'Mực nước',
-                rain_level: 'Lượng mưa',
-                soil_moisture: 'Độ ẩm đất',
-                pressure: 'Áp suất',
-                vibration: 'Rung động',
-                gyro_x: 'Gyro X',
-                gyro_y: 'Gyro Y',
-                gyro_z: 'Gyro Z'
-            };
-
-            for (const field in fields) {
-                addActualTrace(field, fields[field]);
-                addPredictedTrace(field, fields[field]);
-            }
-
-            Plotly.newPlot('multiLineChart', traces, layout);
-
+            drawCharts(data, predict);
             // ==== Thống kê ====
             const stats = predict.statistics;
             let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
