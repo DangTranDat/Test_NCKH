@@ -53,7 +53,6 @@
             border-radius: 6px;
             display: none;
         }
-        /* Các kiểu cảnh báo */
         .alert-item {
             margin-bottom: 8px;
             padding: 10px 12px;
@@ -144,7 +143,7 @@
         const alertList = document.getElementById('alertList');
         alertList.innerHTML = '';
 
-        if (!alerts || alerts.length === 0) {
+        if (!alerts || alerts.length === 0 || alerts.every(a => !a || a.trim() === '')) {
             alertSection.style.display = 'none';
             return;
         }
@@ -152,36 +151,25 @@
         alertSection.style.display = 'block';
 
         alerts.forEach(alert => {
-            // Giả sử alert có dạng: { type: 'warning'|'danger'|'info', message: '...' }
-            // Nếu alert chỉ là chuỗi, ta mặc định kiểu warning
+            if (!alert || alert.trim() === '') return;
+
             let type = 'warning';
-            let message = '';
-            if (typeof alert === 'string') {
-                message = alert;
-            } else {
-                type = alert.type || 'warning';
-                message = alert.message || '';
-            }
+            let message = alert;
 
             const div = document.createElement('div');
-            div.classList.add('alert-item');
-            if (type === 'danger') {
-                div.classList.add('alert-danger');
-            } else if (type === 'info') {
-                div.classList.add('alert-info');
-            } else {
-                div.classList.add('alert-warning');
+            div.classList.add('alert-item', 'alert-warning');
+
+            if (message.includes("NGUY CO") || message.includes("LU LUT") || message.includes("SAT LO")) {
+                div.classList.replace('alert-warning', 'alert-danger');
+                type = 'danger';
+            } else if (message.includes("MUA") || message.includes("DO AM")) {
+                div.classList.replace('alert-warning', 'alert-info');
+                type = 'info';
             }
 
             const iconSpan = document.createElement('span');
             iconSpan.classList.add('alert-icon');
-            if (type === 'danger') {
-                iconSpan.textContent = '⚠️';
-            } else if (type === 'info') {
-                iconSpan.textContent = '🔔';
-            } else {
-                iconSpan.textContent = '⚠️';
-            }
+            iconSpan.textContent = type === 'danger' ? '⚠️' : (type === 'info' ? '🔔' : '⚠️');
 
             div.appendChild(iconSpan);
             div.appendChild(document.createTextNode(message));
@@ -199,9 +187,8 @@
             const data = await dataRes.json();
             const predict = await predictRes.json();
 
-            // ==== Hiển thị cảnh báo ====
-            // Nếu server trả về alerts là mảng các string hoặc object {type, message}
-            const alerts = predict.alerts || [];
+            // ==== Hiển thị cảnh báo từ /data thay vì /predict ====
+            const alerts = data.canhbao || [];
             renderAlerts(alerts);
 
             // ==== Hiển thị bảng dữ liệu ====
@@ -229,7 +216,7 @@
                 tbody.appendChild(row);
             }
 
-            // ==== Hiển thị biểu đồ ====
+            // ==== Biểu đồ ====
             const layout = {
                 title: 'Dữ liệu thực tế và Dự đoán xu hướng',
                 xaxis: { title: 'Thời gian' },
@@ -332,10 +319,7 @@
         }
     }
 
-    // Tải lần đầu
     loadData();
-
-    // Tự động cập nhật mỗi 10 giây
     setInterval(loadData, 10000);
 </script>
 </body>
