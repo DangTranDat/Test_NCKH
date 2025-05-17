@@ -1,350 +1,333 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Giám sát & Dự đoán Thiên tai</title>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f7fa;
-      margin: 0;
-      padding: 0;
-    }
-    #container {
-      max-width: 1200px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    .chart, .table-container {
-      margin-top: 30px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
-    .footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 0.9em;
-      background-color: #333;
-      color: white;
-      margin-top: 30px;
-    }
-    #alertSection {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 6px;
-      display: none;
-    }
-    .alert-item {
-      margin-bottom: 8px;
-      padding: 10px 12px;
-      border-radius: 5px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-    }
-    .alert-icon {
-      margin-right: 10px;
-      font-size: 1.4em;
-    }
-    .alert-warning {
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      color: #856404;
-    }
-    .alert-danger {
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-    .alert-info {
-      background-color: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Giám sát & Dự đoán Thiên tai</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        #container {
+            max-width: 1200px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .chart, .table-container {
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            background-color: #333;
+            color: white;
+            margin-top: 30px;
+        }
+        #alertSection {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .alert-item {
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .alert-icon {
+            margin-right: 10px;
+            font-size: 1.4em;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
 </head>
 <body>
-  <div id="container">
+<div id="container">
     <h1>Hệ thống Giám sát & Dự đoán Thiên tai</h1>
 
     <!-- Cảnh báo -->
     <div id="alertSection">
-      <h2>Cảnh báo</h2>
-      <div id="alertList"></div>
+        <h2>Cảnh báo</h2>
+        <div id="alertList"></div>
     </div>
 
     <!-- Biểu đồ -->
-    <div class="chart"><div id="rainSoilWaterChart" style="height: 400px;"></div></div>
-    <div class="chart"><div id="gyroChart" style="height: 400px;"></div></div>
-    <div class="chart"><div id="vibrationChart" style="height: 300px;"></div></div>
-    <div class="chart"><div id="tempChart" style="height: 400px;"></div></div>
-    <div class="chart"><div id="humidityChart" style="height: 400px;"></div></div>
+    <div class="chart">
+        <div id="multiLineChart" style="height: 500px;"></div>
+    </div>
 
     <!-- Bảng dữ liệu -->
     <div class="table-container">
-      <h2>Dữ liệu gần nhất</h2>
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Thời gian</th>
-            <th>Nhiệt độ (°C)</th>
-            <th>Độ ẩm (%)</th>
-            <th>Mực nước</th>
-            <th>Lượng mưa</th>
-            <th>Độ ẩm đất</th>
-            <th>Áp suất</th>
-            <th>Rung động</th>
-            <th>Gyro X</th>
-            <th>Gyro Y</th>
-            <th>Gyro Z</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <h2>Dữ liệu gần nhất</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Nhiệt độ (°C)</th>
+                    <th>Độ ẩm (%)</th>
+                    <th>Mực nước</th>
+                    <th>Lượng mưa</th>
+                    <th>Độ ẩm đất</th>
+                    <th>Áp suất</th>
+                    <th>Rung động</th>
+                    <th>Gyro X</th>
+                    <th>Gyro Y</th>
+                    <th>Gyro Z</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <!-- Thống kê -->
     <div class="table-container" id="statisticsSection">
-      <h2>Thống kê</h2>
-      <div id="statisticsTable"></div>
+        <h2>Thống kê</h2>
+        <div id="statisticsTable"></div>
     </div>
 
     <!-- Ma trận tương quan -->
     <div class="table-container" id="correlationSection">
-      <h2>Ma trận tương quan</h2>
-      <div id="correlationMatrix"></div>
+        <h2>Ma trận tương quan</h2>
+        <div id="correlationMatrix"></div>
     </div>
-  </div>
+</div>
 
-  <div class="footer">
+<div class="footer">
     &copy; 2025 Hệ thống Giám sát Thiên tai. All rights reserved.
-  </div>
+</div>
 
-  <script>
+<script>
     function renderAlerts(alerts) {
-      const alertSection = document.getElementById('alertSection');
-      const alertList = document.getElementById('alertList');
-      alertList.innerHTML = '';
-      if (!alerts || alerts.length === 0) {
-        alertSection.style.display = 'none';
-        return;
-      }
-      let lastAlert = null;
-      for (let i = alerts.length - 1; i >= 0; i--) {
-        if (alerts[i] && alerts[i].trim() !== '') {
-          lastAlert = alerts[i];
-          break;
+        const alertSection = document.getElementById('alertSection');
+        const alertList = document.getElementById('alertList');
+        alertList.innerHTML = '';
+    
+        if (!alerts || alerts.length === 0) {
+            alertSection.style.display = 'none';
+            return;
         }
-      }
-      if (!lastAlert) {
-        alertSection.style.display = 'none';
-        return;
-      }
-      alertSection.style.display = 'block';
-      const div = document.createElement('div');
-      div.classList.add('alert-item', 'alert-warning');
-      if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
-        div.classList.replace('alert-warning', 'alert-danger');
-      } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
-        div.classList.replace('alert-warning', 'alert-info');
-      }
-      const iconSpan = document.createElement('span');
-      iconSpan.classList.add('alert-icon');
-      iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
-                             lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
-      div.appendChild(iconSpan);
-      div.appendChild(document.createTextNode(lastAlert));
-      alertList.appendChild(div);
+    
+        // Lấy cảnh báo cuối cùng không rỗng
+        let lastAlert = null;
+        for (let i = alerts.length - 1; i >= 0; i--) {
+            if (alerts[i] && alerts[i].trim() !== '') {
+                lastAlert = alerts[i];
+                break;
+            }
+        }
+    
+        if (!lastAlert) {
+            alertSection.style.display = 'none';
+            return;
+        }
+    
+        alertSection.style.display = 'block';
+    
+        const div = document.createElement('div');
+        div.classList.add('alert-item', 'alert-warning');
+    
+        if (lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO")) {
+            div.classList.replace('alert-warning', 'alert-danger');
+        } else if (lastAlert.includes("MUA") || lastAlert.includes("DO AM")) {
+            div.classList.replace('alert-warning', 'alert-info');
+        }
+    
+        const iconSpan = document.createElement('span');
+        iconSpan.classList.add('alert-icon');
+        iconSpan.textContent = lastAlert.includes("NGUY CO") || lastAlert.includes("LU LUT") || lastAlert.includes("SAT LO") ? '⚠️' :
+                                lastAlert.includes("MUA") || lastAlert.includes("DO AM") ? '🔔' : '⚠️';
+    
+        div.appendChild(iconSpan);
+        div.appendChild(document.createTextNode(lastAlert));
+        alertList.appendChild(div);
     }
 
-    function plotCharts(data, predict) {
-      const colors = {
-        temperature: 'red',
-        humidity: 'blue',
-        water_level: 'green',
-        rain_level: 'orange',
-        soil_moisture: 'purple',
-        pressure: 'brown',
-        vibration: 'teal',
-        gyro_x: 'pink',
-        gyro_y: 'gray',
-        gyro_z: 'cyan'
-      };
-
-      function createTrace(field, label, type = 'line') {
-        return {
-          x: data.timestamps,
-          y: data[`${field}s`],
-          type: type === 'bar' ? 'bar' : 'scatter',
-          mode: 'lines+markers',
-          name: `${label} (thực tế)`,
-          line: { color: colors[field] || 'black' }
-        };
-      }
-
-      function createPredictionTrace(field, label) {
-        const pred = predict.prediction[field];
-        if (!pred || !pred.predicted_next) return null;
-        const futureX = pred.predicted_next.map((_, i) => `T+${i + 1}`);
-        return {
-          x: futureX,
-          y: pred.predicted_next,
-          mode: 'lines',
-          name: `${label} (dự đoán)`,
-          line: { dash: 'dot', color: colors[field] || 'gray' }
-        };
-      }
-
-      Plotly.newPlot('tempChart', [
-        createTrace('temperature', 'Nhiệt độ'),
-        createPredictionTrace('temperature', 'Nhiệt độ')
-      ].filter(Boolean), {
-        title: 'Biểu đồ Nhiệt độ',
-        xaxis: { title: 'Thời gian' },
-        yaxis: { title: '°C' }
-      });
-
-      Plotly.newPlot('humidityChart', [
-        createTrace('humidity', 'Độ ẩm'),
-        createPredictionTrace('humidity', 'Độ ẩm')
-      ].filter(Boolean), {
-        title: 'Biểu đồ Độ ẩm',
-        xaxis: { title: 'Thời gian' },
-        yaxis: { title: '%' }
-      });
-
-      Plotly.newPlot('gyroChart', [
-        createTrace('gyro_x', 'Gyro X'),
-        createPredictionTrace('gyro_x', 'Gyro X'),
-        createTrace('gyro_y', 'Gyro Y'),
-        createPredictionTrace('gyro_y', 'Gyro Y'),
-        createTrace('gyro_z', 'Gyro Z'),
-        createPredictionTrace('gyro_z', 'Gyro Z')
-      ].filter(Boolean), {
-        title: 'Gyroscope (X, Y, Z)',
-        xaxis: { title: 'Thời gian' },
-        yaxis: { title: 'Giá trị' }
-      });
-
-      Plotly.newPlot('rainSoilWaterChart', [
-        createTrace('rains_level', 'Lượng mưa'),
-        createPredictionTrace('rains_level', 'Lượng mưa'),
-        createTrace('water_level', 'Mực nước'),
-        createPredictionTrace('water_level', 'Mực nước'),
-        createTrace('soil_moisture', 'Độ ẩm đất'),
-        createPredictionTrace('soil_moisture', 'Độ ẩm đất')
-      ].filter(Boolean), {
-        title: 'Lượng mưa - Mực nước - Độ ẩm đất',
-        xaxis: { title: 'Thời gian' },
-        yaxis: { title: 'Giá trị' }
-      });
-
-      const vibrationBinary = data.vibrations.map(v => v === true || v === "True" ? 1 : 0);
-      Plotly.newPlot('vibrationChart', [{
-        x: data.timestamps,
-        y: vibrationBinary,
-        type: 'bar',
-        name: 'Rung động',
-        marker: { color: 'teal' }
-      }], {
-        title: 'Rung động (1 = Có, 0 = Không)',
-        xaxis: { title: 'Thời gian' },
-        yaxis: { tickvals: [0, 1], ticktext: ['Không', 'Có'], title: 'Trạng thái' }
-      });
-    }
 
     async function loadData() {
-      try {
-        const [dataRes, predictRes] = await Promise.all([
-          fetch('/data'),
-          fetch('/predict')
-        ]);
-        const data = await dataRes.json();
-        const predict = await predictRes.json();
-        renderAlerts(data.canhbao || []);
-        const tbody = document.querySelector('#dataTable tbody');
-        tbody.innerHTML = '';
-        for (let i = 0; i < data.timestamps.length; i++) {
-          const row = document.createElement('tr');
-          [
-            data.timestamps[i],
-            data.temperatures[i],
-            data.humidities[i],
-            data.water_levels[i],
-            data.rains_level[i],
-            data.soil_moistures[i],
-            data.pressures[i],
-            data.vibrations[i],
-            data.gyro_xs[i],
-            data.gyro_ys[i],
-            data.gyro_zs[i]
-          ].forEach(value => {
-            const cell = document.createElement('td');
-            cell.innerText = value;
-            row.appendChild(cell);
-          });
-          tbody.appendChild(row);
+        try {
+            const [dataRes, predictRes] = await Promise.all([
+                fetch('/data'),
+                fetch('/predict')
+            ]);
+
+            const data = await dataRes.json();
+            const predict = await predictRes.json();
+
+            // ==== Hiển thị cảnh báo từ /data thay vì /predict ====
+            const alerts = data.canhbao || [];
+            renderAlerts(alerts);
+
+            // ==== Hiển thị bảng dữ liệu ====
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+            for (let i = 0; i < data.timestamps.length; i++) {
+                const row = document.createElement('tr');
+                [
+                    data.timestamps[i],
+                    data.temperatures[i],
+                    data.humidities[i],
+                    data.water_levels[i],
+                    data.rains_level[i],
+                    data.soil_moistures[i],
+                    data.pressures[i],
+                    data.vibrations[i],
+                    data.gyro_xs[i],
+                    data.gyro_ys[i],
+                    data.gyro_zs[i]
+                ].forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.innerText = value;
+                    row.appendChild(cell);
+                });
+                tbody.appendChild(row);
+            }
+
+            // ==== Biểu đồ ====
+            const layout = {
+                title: 'Dữ liệu thực tế và Dự đoán xu hướng',
+                xaxis: { title: 'Thời gian' },
+                yaxis: { title: 'Giá trị' }
+            };
+
+            const traces = [];
+            const colors = {
+                temperature: 'red',
+                humidity: 'blue',
+                water_level: 'green',
+                rain_level: 'orange',
+                soil_moisture: 'purple',
+                pressure: 'brown',
+                vibration: 'teal',
+                gyro_x: 'pink',
+                gyro_y: 'gray',
+                gyro_z: 'cyan'
+            };
+
+            function addActualTrace(field, label) {
+                if (data[`${field}s`] && data.timestamps) {
+                    traces.push({
+                        x: data.timestamps,
+                        y: data[`${field}s`],
+                        mode: 'lines+markers',
+                        name: `${label} (thực tế)`,
+                        line: { color: colors[field] || 'gray' }
+                    });
+                }
+            }
+
+            function addPredictedTrace(field, label) {
+                const pred = predict.prediction[field];
+                if (pred && pred.predicted_next) {
+                    const futureX = pred.predicted_next.map((_, i) => `T+${i + 1}`);
+                    traces.push({
+                        x: futureX,
+                        y: pred.predicted_next,
+                        mode: 'lines',
+                        name: `${label} (dự đoán)`,
+                        line: { dash: 'dot', color: colors[field] || 'gray' }
+                    });
+                }
+            }
+
+            const fields = {
+                temperature: 'Nhiệt độ',
+                humidity: 'Độ ẩm',
+                water_level: 'Mực nước',
+                rain_level: 'Lượng mưa',
+                soil_moisture: 'Độ ẩm đất',
+                pressure: 'Áp suất',
+                vibration: 'Rung động',
+                gyro_x: 'Gyro X',
+                gyro_y: 'Gyro Y',
+                gyro_z: 'Gyro Z'
+            };
+
+            for (const field in fields) {
+                addActualTrace(field, fields[field]);
+                addPredictedTrace(field, fields[field]);
+            }
+
+            Plotly.newPlot('multiLineChart', traces, layout);
+
+            // ==== Thống kê ====
+            const stats = predict.statistics;
+            let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
+            for (const key in stats) {
+                statsHTML += `<tr>
+                    <td>${key}</td>
+                    <td>${stats[key].mean}</td>
+                    <td>${stats[key].std}</td>
+                    <td>${stats[key].min}</td>
+                    <td>${stats[key].max}</td>
+                </tr>`;
+            }
+            statsHTML += '</tbody></table>';
+            document.getElementById('statisticsTable').innerHTML = statsHTML;
+
+            // ==== Ma trận tương quan ====
+            const corr = predict.correlation_matrix;
+            const params = Object.keys(corr);
+            let corrHTML = '<table><thead><tr><th></th>';
+            params.forEach(p => corrHTML += `<th>${p}</th>`);
+            corrHTML += '</tr></thead><tbody>';
+            params.forEach(row => {
+                corrHTML += `<tr><td>${row}</td>`;
+                params.forEach(col => {
+                    corrHTML += `<td>${corr[row][col]}</td>`;
+                });
+                corrHTML += '</tr>';
+            });
+            corrHTML += '</tbody></table>';
+            document.getElementById('correlationMatrix').innerHTML = corrHTML;
+
+        } catch (err) {
+            console.error("Lỗi khi tải dữ liệu:", err);
         }
-
-        plotCharts(data, predict);
-
-        // Thống kê
-        const stats = predict.statistics;
-        let statsHTML = '<table><thead><tr><th>Thông số</th><th>Trung bình</th><th>Độ lệch chuẩn</th><th>Min</th><th>Max</th></tr></thead><tbody>';
-        for (const key in stats) {
-          statsHTML += `<tr>
-            <td>${key}</td>
-            <td>${stats[key].mean}</td>
-            <td>${stats[key].std}</td>
-            <td>${stats[key].min}</td>
-            <td>${stats[key].max}</td>
-          </tr>`;
-        }
-        statsHTML += '</tbody></table>';
-        document.getElementById('statisticsTable').innerHTML = statsHTML;
-
-        // Ma trận tương quan
-        const corr = predict.correlation_matrix;
-        const params = Object.keys(corr);
-        let corrHTML = '<table><thead><tr><th></th>';
-        params.forEach(p => corrHTML += `<th>${p}</th>`);
-        corrHTML += '</tr></thead><tbody>';
-        params.forEach(row => {
-          corrHTML += `<tr><td>${row}</td>`;
-          params.forEach(col => {
-            corrHTML += `<td>${corr[row][col]}</td>`;
-          });
-          corrHTML += '</tr>';
-        });
-        corrHTML += '</tbody></table>';
-        document.getElementById('correlationMatrix').innerHTML = corrHTML;
-
-      } catch (err) {
-        console.error("Lỗi khi tải dữ liệu:", err);
-      }
     }
 
     loadData();
     setInterval(loadData, 10000);
-  </script>
+</script>
 </body>
 </html>
