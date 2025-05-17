@@ -132,7 +132,10 @@ def predict_trend():
             }
         
         # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
-        last = df.iloc[-1]
+        data = request.json
+        canhbao = data.get('Canh bao')
+        alerts.append(canhbao)
+        """last = df.iloc[-1]
 
         if last['temperature'] < 35:
             alerts.append("Cảnh báo: Nhiệt độ cao vượt ngưỡng 35°C")
@@ -144,7 +147,9 @@ def predict_trend():
             alerts.append("Cảnh báo: Mực nước vượt ngưỡng an toàn")
         
         if last['vibration'] > 1.5:
-            alerts.append("Cảnh báo: Rung động mạnh vượt ngưỡng")
+            alerts.append("Cảnh báo: Rung động mạnh vượt ngưỡng")"""
+
+        
 
 
         # Ma trận tương quan
