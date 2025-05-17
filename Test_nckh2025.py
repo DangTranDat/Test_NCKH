@@ -28,7 +28,7 @@ def data():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT timestamp, temperature, humidity, water_level, rain_level,
-                   soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z
+                   soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z, canhbao
             FROM nckh2025
             ORDER BY timestamp DESC
             LIMIT 20
@@ -50,6 +50,7 @@ def data():
             'gyro_xs': [r[8] for r in rows],
             'gyro_ys': [r[9] for r in rows],
             'gyro_zs': [r[10] for r in rows],
+            'canhbao': [r[11] for r in rows],
         })
 
     except Exception as e:
