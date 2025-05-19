@@ -108,7 +108,31 @@ def predict_trend():
         forecast_steps = 5
         parameters = ['temperature', 'humidity', 'water_level', 'rain_level',
                       'soil_moisture', 'pressure', 'vibration']
-
+        for param in parameters:
+            series = df[param].astype(float).dropna()
+            if len(series) < 10:
+                result[param] = {'error': 'Không đủ dữ liệu để dự đoán'}
+                continue
+            if series.std() == 0:
+                 # Tất cả giá trị đều giống nhau => dự báo cũng giống nhau
+                repeated_value = series.iloc[-1]
+                result[param] = {
+                    'last_values': series[-5:].tolist(),
+                    'predicted_next': [repeated_value] * forecast_steps,
+                    'note': 'Chuỗi dữ liệu không đổi - giá trị dự báo được lặp lại'
+                }
+                continue
+            try:
+                model = ExponentialSmoothing(series, trend='add', seasonal=None, damped_trend=True)
+                fit = model.fit()
+                prediction = fit.forecast(forecast_steps)
+                result[param] = {
+                    'last_values': series[-5:].tolist(),
+                    'predicted_next': prediction.tolist()
+                }
+            except Exception as e:
+                result[param] = {'error': f'Lỗi mô hình: {str(e)}'}
+"""
         for param in parameters:
             series = df[param].astype(float)
 
@@ -124,7 +148,7 @@ def predict_trend():
                 'last_values': series[-5:].tolist(),
                 'predicted_next': prediction.tolist()
             }
-
+"""
             stats[param] = {
                 'mean': round(np.mean(series), 2),
                 'std': round(np.std(series), 2),
