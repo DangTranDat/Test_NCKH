@@ -96,24 +96,18 @@ def predict_trend():
                    soil_moisture, pressure, vibration
             FROM nckh2025
             ORDER BY timestamp DESC
-            LIMIT 100
+            LIMIT 1000
         """
         df = pd.read_sql(query, conn)
         conn.close()
 
         df = df.sort_values('timestamp')
-
-        # Thay thế giá trị bất thường như -3.0 (giá trị placeholder sai) bằng NaN
-        df.replace(-3.0, np.nan, inplace=True)
-
-        # Loại bỏ các dòng thiếu dữ liệu trong các cột chính
-        parameters = ['temperature', 'humidity', 'water_level', 'rain_level',
-                      'soil_moisture', 'pressure', 'vibration']
-        df.dropna(subset=parameters, inplace=True)
-
         result = {}
         stats = {}
+
         forecast_steps = 5
+        parameters = ['temperature', 'humidity', 'water_level', 'rain_level',
+                      'soil_moisture', 'pressure', 'vibration']
 
         for param in parameters:
             series = df[param].astype(float)
@@ -122,43 +116,35 @@ def predict_trend():
                 result[param] = {'error': 'Không đủ dữ liệu để dự đoán'}
                 continue
 
-            try:
-                model = ExponentialSmoothing(series, trend='add', seasonal=None, damped_trend=True)
-                fit = model.fit()
-                prediction = fit.forecast(forecast_steps)
+            model = ExponentialSmoothing(series, trend='add', seasonal=None, damped_trend=True)
+            fit = model.fit()
+            prediction = fit.forecast(forecast_steps)
 
-                result[param] = {
-                    'last_values': series[-5:].tolist(),
-                    'predicted_next': prediction.tolist()
-                }
+            result[param] = {
+                'last_values': series[-5:].tolist(),
+                'predicted_next': prediction.tolist()
+            }
 
-                stats[param] = {
-                    'mean': round(np.mean(series), 2),
-                    'std': round(np.std(series), 2),
-                    'min': round(np.min(series), 2),
-                    'max': round(np.max(series), 2)
-                }
-            except Exception as model_err:
-                result[param] = {'error': f'Lỗi mô hình: {str(model_err)}'}
-
-        # Tính ma trận tương quan chỉ với các cột có nhiều hơn 1 giá trị duy nhất
-        valid_columns = [col for col in parameters if df[col].nunique() > 1]
-        if valid_columns:
-            corr_matrix = df[valid_columns].corr().round(2).to_dict()
-        else:
-            corr_matrix = {}
+            stats[param] = {
+                'mean': round(np.mean(series), 2),
+                'std': round(np.std(series), 2),
+                'min': round(np.min(series), 2),
+                'max': round(np.max(series), 2)
+            }
+        
+        # Ma trận tương quan
+        corr_matrix = df[parameters].corr().round(2).to_dict()
 
         return jsonify({
             'prediction': result,
             'statistics': stats,
             'correlation_matrix': corr_matrix,
-            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S") if not df.empty else None
+            'last_timestamp': df['timestamp'].iloc[-1].strftime("%Y-%m-%d %H:%M:%S")
         })
 
     except Exception as e:
         print("Lỗi khi dự đoán:", e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=10000)
