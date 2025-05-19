@@ -132,48 +132,12 @@ def predict_trend():
                 }
             except Exception as e:
                 result[param] = {'error': f'Lỗi mô hình: {str(e)}'}
-"""
-        for param in parameters:
-            series = df[param].astype(float)
-
-            if len(series) < 10:
-                result[param] = {'error': 'Không đủ dữ liệu để dự đoán'}
-                continue
-
-            model = ExponentialSmoothing(series, trend='add', seasonal=None, damped_trend=True)
-            fit = model.fit()
-            prediction = fit.forecast(forecast_steps)
-
-            result[param] = {
-                'last_values': series[-5:].tolist(),
-                'predicted_next': prediction.tolist()
-            }
-"""
             stats[param] = {
                 'mean': round(np.mean(series), 2),
                 'std': round(np.std(series), 2),
                 'min': round(np.min(series), 2),
                 'max': round(np.max(series), 2)
             }
-        
-        # PHÂN TÍCH CẢNH BÁO từ giá trị mới nhất
-        """last = df.iloc[-1]
-
-        if last['temperature'] < 35:
-            alerts.append("Cảnh báo: Nhiệt độ cao vượt ngưỡng 35°C")
-
-        if last['humidity'] < 30:
-            alerts.append("Cảnh báo: Độ ẩm thấp dưới 30%")
-
-        if last['water_level'] > 80:
-            alerts.append("Cảnh báo: Mực nước vượt ngưỡng an toàn")
-        
-        if last['vibration'] > 1.5:
-            alerts.append("Cảnh báo: Rung động mạnh vượt ngưỡng")"""
-
-        
-
-
         # Ma trận tương quan
         corr_matrix = df[parameters].corr().round(2).to_dict()
 
