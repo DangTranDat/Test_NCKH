@@ -110,11 +110,13 @@ def predict_trend():
                       'soil_moisture', 'pressure', 'vibration']
         for param in parameters:
             series = df[param].astype(float).dropna()
+            
             if len(series) < 10:
                 result[param] = {'error': 'Không đủ dữ liệu để dự đoán'}
                 continue
-            if series.std() == 0:
-                 # Tất cả giá trị đều giống nhau => dự báo cũng giống nhau
+        
+            # Nếu tất cả giá trị đều giống nhau
+            if series.nunique() == 1:
                 repeated_value = series.iloc[-1]
                 result[param] = {
                     'last_values': series[-5:].tolist(),
@@ -122,16 +124,29 @@ def predict_trend():
                     'note': 'Chuỗi dữ liệu không đổi - giá trị dự báo được lặp lại'
                 }
                 continue
+        
             try:
                 model = ExponentialSmoothing(series, trend='add', seasonal=None, damped_trend=True)
                 fit = model.fit()
                 prediction = fit.forecast(forecast_steps)
+        
+                # Nếu model trả về NaN thì thay bằng lặp lại giá trị cuối
+                if np.isnan(prediction).any():
+                    repeated_value = series.iloc[-1]
+                    prediction = pd.Series([repeated_value] * forecast_steps)
+                    note = 'Giá trị mô hình trả về NaN - fallback sang giá trị lặp lại'
+                else:
+                    note = ''
+        
                 result[param] = {
                     'last_values': series[-5:].tolist(),
-                    'predicted_next': prediction.tolist()
+                    'predicted_next': prediction.tolist(),
+                    'note': note
                 }
+        
             except Exception as e:
                 result[param] = {'error': f'Lỗi mô hình: {str(e)}'}
+
             stats[param] = {
                 'mean': round(np.mean(series), 2),
                 'std': round(np.std(series), 2),
