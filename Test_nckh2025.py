@@ -29,7 +29,7 @@ def data():
         cursor.execute("""
             SELECT timestamp, temperature, humidity, water_level, rain_level,
                    soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z, canhbao
-            FROM nckh2025
+            FROM do_an_vien_thong
             ORDER BY timestamp DESC
             LIMIT 20
         """)
@@ -66,7 +66,7 @@ def upload_data():
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO nckh2025 (
+            INSERT INTO do_an_vien_thong (
                 timestamp, temperature, humidity, water_level, rain_level,
                 soil_moisture, pressure, vibration, gyro_x, gyro_y, gyro_z,canhbao
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
@@ -94,7 +94,7 @@ def predict_trend():
         query = """
             SELECT timestamp, temperature, humidity, water_level, rain_level,
                    soil_moisture, pressure, vibration
-            FROM nckh2025
+            FROM do_an_vien_thong
             ORDER BY timestamp DESC
             LIMIT 1000
         """
